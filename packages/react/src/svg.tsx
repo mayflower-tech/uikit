@@ -33,6 +33,10 @@ export const Svg: (props: SvgProperties & RefAttributes<SvgRef>) => ReactNode = 
         propertySignals.default,
         outerRef,
         innerRef,
+        // @ts-expect-error
+        propertySignals.handlers,
+        propertySignals.hoverProps,
+        propertySignals.activeProps,
       ),
     [parent, propertySignals],
   )

@@ -28,6 +28,7 @@ export class Input<T = {}, Em extends ThreeEventMap = ThreeEventMap> extends Com
       if (parentContext == null) {
         return
       }
+      // @ts-expect-error
       const internals = (this.internals = createInput(
         parentContext,
         parentContext.fontFamiliesSignal,

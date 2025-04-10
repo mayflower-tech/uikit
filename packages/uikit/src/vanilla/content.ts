@@ -35,6 +35,7 @@ export class Content<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends C
       if (parentContext == null) {
         return
       }
+      // @ts-expect-error
       const internals = (this.internals = createContent(
         parentContext,
         this.styleSignal,

@@ -7,7 +7,7 @@ import { WithResponsive } from '../responsive.js'
 import { ColorRepresentation, Initializers, readReactive } from '../utils.js'
 import { FlexNode, FlexNodeState } from '../flex/index.js'
 import { ParentContext, Object3DRef, RootContext } from '../context.js'
-import { EventHandlers } from '../events.js'
+import { EventHandlers, ThreeMouseEvent, ThreePointerEvent } from '../events.js'
 import {
   AllOptionalProperties,
   MergedProperties,
@@ -167,34 +167,41 @@ const eventHandlerKeys: Array<keyof EventHandlers> = [
 
 export function computedHandlers(
   style: Signal<Properties | undefined>,
-  propertiesSignal: Signal<Properties | undefined>,
   defaultProperties: Signal<AllOptionalProperties | undefined>,
   hoveredSignal: Signal<Array<number>>,
   activeSignal: Signal<Array<number>>,
+  handlersSingal: Record<keyof EventHandlers, Signal<EventHandlers[keyof EventHandlers] | undefined>>,
+  hoverPropsSignal: Signal<unknown | undefined>,
+  activePropsSignal: Signal<unknown | undefined>,
   dynamicHandlers?: Signal<EventHandlers | undefined>,
   defaultCursor?: string,
 ) {
   return computed(() => {
     const handlers: EventHandlers = {}
-    const properties = propertiesSignal.value
-    if (properties != null) {
-      for (const key of eventHandlerKeys) {
-        const handler = properties[key]
-        if (handler != null) {
-          handlers[key] = handler as any
-        }
+    for (const key of eventHandlerKeys) {
+      const handler = handlersSingal[key].value
+      if (handler != null) {
+        handlers[key] = handler as any
       }
     }
     addHandlers(handlers, dynamicHandlers?.value)
     addHoverHandlers(
       handlers,
       style.value,
-      propertiesSignal.value,
+      // @ts-expect-error
+      hoverPropsSignal.value,
       defaultProperties.value,
       hoveredSignal,
       defaultCursor,
     )
-    addActiveHandlers(handlers, style.value, propertiesSignal.value, defaultProperties.value, activeSignal)
+    addActiveHandlers(
+      handlers,
+      style.value,
+      // @ts-expect-error
+      activePropsSignal.value,
+      defaultProperties.value,
+      activeSignal,
+    )
     return handlers
   })
 }

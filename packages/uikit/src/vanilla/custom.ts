@@ -32,6 +32,7 @@ export class CustomContainer<T = {}, EM extends ThreeEventMap = ThreeEventMap> e
       if (parentContext == null) {
         return
       }
+      // @ts-expect-error
       const internals = createCustomContainer(
         parentContext,
         this.styleSignal,

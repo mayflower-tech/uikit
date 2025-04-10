@@ -117,6 +117,9 @@ export function createImage<EM extends ThreeEventMap = ThreeEventMap>(
   defaultProperties: Signal<AllOptionalProperties | undefined>,
   object: Object3DRef,
   childrenContainer: Object3DRef,
+  handlersSignal: Record<keyof EventHandlers, Signal<EventHandlers[keyof EventHandlers]>>,
+  hoverPropsSingnal: Signal<unknown | undefined>,
+  activePropsSingnal: Signal<unknown | undefined>,
 ) {
   const initializers: Initializers = []
   const texture = signal<Texture | undefined>(undefined)
@@ -205,7 +208,16 @@ export function createImage<EM extends ThreeEventMap = ThreeEventMap>(
     initializers,
   )
 
-  const handlers = computedHandlers(style, properties, defaultProperties, hoveredSignal, activeSignal, scrollHandlers)
+  const handlers = computedHandlers(
+    style,
+    defaultProperties,
+    hoveredSignal,
+    activeSignal,
+    handlersSignal,
+    hoverPropsSingnal,
+    activePropsSingnal,
+    scrollHandlers,
+  )
   const ancestorsHaveListeners = computeAncestorsHaveListeners(parentCtx, handlers)
   setupPointerEvents(mergedProperties, ancestorsHaveListeners, parentCtx.root, imageMesh, initializers, false)
 

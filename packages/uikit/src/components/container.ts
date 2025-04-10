@@ -74,6 +74,9 @@ export function createContainer<EM extends ThreeEventMap = ThreeEventMap>(
   defaultProperties: Signal<AllOptionalProperties | undefined>,
   object: Object3DRef,
   childrenContainer: Object3DRef,
+  handlersSignal: Record<keyof EventHandlers, Signal<EventHandlers[keyof EventHandlers]>>,
+  hoverPropsSingnal: Signal<unknown | undefined>,
+  activePropsSingnal: Signal<unknown | undefined>,
 ) {
   const node = signal<FlexNode | undefined>(undefined)
   const flexState = createFlexNodeState()
@@ -152,7 +155,16 @@ export function createContainer<EM extends ThreeEventMap = ThreeEventMap>(
     initializers,
   )
 
-  const handlers = computedHandlers(style, properties, defaultProperties, hoveredSignal, activeSignal, scrollHandlers)
+  const handlers = computedHandlers(
+    style,
+    defaultProperties,
+    hoveredSignal,
+    activeSignal,
+    handlersSignal,
+    hoverPropsSingnal,
+    activePropsSingnal,
+    scrollHandlers,
+  )
   const ancestorsHaveListeners = computeAncestorsHaveListeners(parentCtx, handlers)
 
   const interactionPanel = createInteractionPanel(

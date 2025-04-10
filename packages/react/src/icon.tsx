@@ -36,6 +36,10 @@ export const Icon: (props: IconProperties & RefAttributes<IconRef>) => ReactNode
         propertySignals.properties,
         propertySignals.default,
         outerRef,
+        // @ts-expect-error
+        propertySignals.handlers,
+        propertySignals.hoverProps,
+        propertySignals.activeProps,
       ),
     [parent, properties.svgHeight, properties.svgWidth, properties.text, propertySignals],
   )

@@ -28,6 +28,7 @@ export class Image<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Par
       if (parentContext == null) {
         return
       }
+      // @ts-expect-error
       const internals = (this.internals = createImage(
         parentContext,
         this.styleSignal,

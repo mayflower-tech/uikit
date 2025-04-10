@@ -33,6 +33,10 @@ export const Image: (props: ImageProperties & RefAttributes<ImageRef>) => ReactN
         propertySignals.default,
         outerRef,
         innerRef,
+        // @ts-expect-error
+        propertySignals.handlers,
+        propertySignals.hoverProps,
+        propertySignals.activeProps,
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],

@@ -43,6 +43,10 @@ export const Input: (props: InputProperties & RefAttributes<InputRef>) => ReactN
         propertySignals.properties,
         propertySignals.default,
         outerRef,
+        // @ts-expect-error
+        propertySignals.handlers,
+        propertySignals.hoverProps,
+        propertySignals.activeProps,
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],

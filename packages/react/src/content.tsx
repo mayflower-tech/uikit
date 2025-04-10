@@ -28,6 +28,10 @@ export const Content: (props: ContentProperties & RefAttributes<ContentRef>) => 
           propertySignals.default,
           outerRef,
           innerRef,
+          // @ts-expect-error
+          propertySignals.handlers,
+          propertySignals.hoverProps,
+          propertySignals.activeProps,
         ),
       [parent, propertySignals],
     )

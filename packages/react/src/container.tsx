@@ -34,6 +34,10 @@ export const Container: (props: ContainerProperties & RefAttributes<ContainerRef
           propertySignals.default,
           outerRef,
           innerRef,
+          // @ts-expect-error
+          propertySignals.handlers,
+          propertySignals.hoverProps,
+          propertySignals.activeProps,
         ),
       [parent, propertySignals],
     )

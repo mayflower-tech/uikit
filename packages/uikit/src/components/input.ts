@@ -120,6 +120,9 @@ export function createInput<EM extends ThreeEventMap = ThreeEventMap>(
   properties: Signal<InputProperties<EM> | undefined>,
   defaultProperties: Signal<AllOptionalProperties | undefined>,
   object: Object3DRef,
+  handlersSignal: Record<keyof EventHandlers, Signal<EventHandlers[keyof EventHandlers]>>,
+  hoverPropsSingnal: Signal<unknown | undefined>,
+  activePropsSingnal: Signal<unknown | undefined>,
 ) {
   const hoveredSignal = signal<Array<number>>([])
   const activeSignal = signal<Array<number>>([])
@@ -304,10 +307,12 @@ export function createInput<EM extends ThreeEventMap = ThreeEventMap>(
 
   const handlers = computedHandlers(
     style,
-    properties,
     defaultProperties,
     hoveredSignal,
     activeSignal,
+    handlersSignal,
+    hoverPropsSingnal,
+    activePropsSingnal,
     selectionHandlers,
     'text',
   )

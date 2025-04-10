@@ -59,6 +59,9 @@ export function createCustomContainer<EM extends ThreeEventMap = ThreeEventMap>(
   defaultProperties: Signal<AllOptionalProperties | undefined>,
   object: Object3DRef,
   meshRef: { current?: Mesh | null },
+  handlersSignal: Record<keyof EventHandlers, Signal<EventHandlers[keyof EventHandlers]>>,
+  hoverPropsSingnal: Signal<unknown | undefined>,
+  activePropsSingnal: Signal<unknown | undefined>,
 ) {
   const hoveredSignal = signal<Array<number>>([])
   const activeSignal = signal<Array<number>>([])
@@ -150,7 +153,15 @@ export function createCustomContainer<EM extends ThreeEventMap = ThreeEventMap>(
 
   setupMatrixWorldUpdate(true, true, object, parentCtx.root, globalMatrix, initializers, false)
 
-  const handlers = computedHandlers(style, properties, defaultProperties, hoveredSignal, activeSignal)
+  const handlers = computedHandlers(
+    style,
+    defaultProperties,
+    hoveredSignal,
+    activeSignal,
+    handlersSignal,
+    hoverPropsSingnal,
+    activePropsSingnal,
+  )
   const ancestorsHaveListeners = computeAncestorsHaveListeners(parentCtx, handlers)
   setupPointerEvents(mergedProperties, ancestorsHaveListeners, parentCtx.root, object, initializers, true)
 

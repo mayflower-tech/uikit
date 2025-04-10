@@ -69,6 +69,9 @@ export function createIcon<EM extends ThreeEventMap = ThreeEventMap>(
   properties: Signal<IconProperties<EM> | undefined>,
   defaultProperties: Signal<AllOptionalProperties | undefined>,
   object: Object3DRef,
+  handlersSignal: Record<keyof EventHandlers, Signal<EventHandlers[keyof EventHandlers]>>,
+  hoverPropsSingnal: Signal<unknown | undefined>,
+  activePropsSingnal: Signal<unknown | undefined>,
 ) {
   const initializers: Initializers = []
   const hoveredSignal = signal<Array<number>>([])
@@ -141,7 +144,15 @@ export function createIcon<EM extends ThreeEventMap = ThreeEventMap>(
 
   setupMatrixWorldUpdate(true, true, object, parentCtx.root, globalMatrix, initializers, false)
 
-  const handlers = computedHandlers(style, properties, defaultProperties, hoveredSignal, activeSignal)
+  const handlers = computedHandlers(
+    style,
+    defaultProperties,
+    hoveredSignal,
+    activeSignal,
+    handlersSignal,
+    hoverPropsSingnal,
+    activePropsSingnal,
+  )
   const ancestorsHaveListeners = computeAncestorsHaveListeners(parentCtx, handlers)
   setupPointerEvents(mergedProperties, ancestorsHaveListeners, parentCtx.root, object, initializers, false)
 

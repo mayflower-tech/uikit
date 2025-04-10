@@ -34,6 +34,7 @@ export class Text<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Comp
       if (parentContext == null) {
         return
       }
+      // @ts-expect-error
       const internals = (this.internals = createText(
         parentContext,
         this.textSignal,

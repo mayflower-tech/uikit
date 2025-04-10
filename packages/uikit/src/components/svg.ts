@@ -99,6 +99,9 @@ export function createSvg<EM extends ThreeEventMap = ThreeEventMap>(
   defaultProperties: Signal<AllOptionalProperties | undefined>,
   object: Object3DRef,
   childrenContainer: Object3DRef,
+  handlersSignal: Record<keyof EventHandlers, Signal<EventHandlers[keyof EventHandlers]>>,
+  hoverPropsSingnal: Signal<unknown | undefined>,
+  activePropsSingnal: Signal<unknown | undefined>,
 ) {
   const initializers: Initializers = []
   const hoveredSignal = signal<Array<number>>([])
@@ -212,7 +215,16 @@ export function createSvg<EM extends ThreeEventMap = ThreeEventMap>(
     initializers,
   )
 
-  const handlers = computedHandlers(style, properties, defaultProperties, hoveredSignal, activeSignal, scrollHandlers)
+  const handlers = computedHandlers(
+    style,
+    defaultProperties,
+    hoveredSignal,
+    activeSignal,
+    handlersSignal,
+    hoverPropsSingnal,
+    activePropsSingnal,
+    scrollHandlers,
+  )
   const ancestorsHaveListeners = computeAncestorsHaveListeners(undefined, handlers)
   setupPointerEvents(mergedProperties, ancestorsHaveListeners, parentCtx.root, centerGroup, initializers, false)
   setupPointerEvents(mergedProperties, ancestorsHaveListeners, parentCtx.root, interactionPanel, initializers, false)

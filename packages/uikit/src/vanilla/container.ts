@@ -28,6 +28,7 @@ export class Container<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends
         this.contextSignal.value = undefined
         return
       }
+      // @ts-expect-error
       const internals = (this.internals = createContainer(
         parentContext,
         this.styleSignal,

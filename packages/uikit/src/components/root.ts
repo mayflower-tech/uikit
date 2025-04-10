@@ -91,6 +91,9 @@ export function createRoot<EM extends ThreeEventMap = ThreeEventMap>(
   onFrameSet: Set<(delta: number) => void>,
   requestRender: () => void = () => {},
   requestFrame: () => void = () => {},
+  handlersSignal: Record<keyof EventHandlers, Signal<EventHandlers[keyof EventHandlers]>>,
+  hoverPropsSingnal: Signal<unknown | undefined>,
+  activePropsSingnal: Signal<unknown | undefined>,
 ) {
   const rootSize = signal<Vector2Tuple>([0, 0])
   const hoveredSignal = signal<Array<number>>([])
@@ -262,7 +265,16 @@ export function createRoot<EM extends ThreeEventMap = ThreeEventMap>(
     initializers,
   )
 
-  const handlers = computedHandlers(style, properties, defaultProperties, hoveredSignal, activeSignal, scrollHandlers)
+  const handlers = computedHandlers(
+    style,
+    defaultProperties,
+    hoveredSignal,
+    activeSignal,
+    handlersSignal,
+    hoverPropsSingnal,
+    activePropsSingnal,
+    scrollHandlers,
+  )
   const ancestorsHaveListeners = computeAncestorsHaveListeners(undefined, handlers)
   setupPointerEvents(mergedProperties, ancestorsHaveListeners, rootCtx, interactionPanel, initializers, false)
 

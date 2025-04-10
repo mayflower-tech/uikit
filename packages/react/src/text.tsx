@@ -42,6 +42,10 @@ export const Text: (props: TextProperties & RefAttributes<TextRef>) => ReactNode
         propertySignals.properties,
         propertySignals.default,
         outerRef,
+        // @ts-expect-error
+        propertySignals.handlers,
+        propertySignals.hoverProps,
+        propertySignals.activeProps,
       ),
     [fontFamilies, parent, propertySignals, textSignal],
   )

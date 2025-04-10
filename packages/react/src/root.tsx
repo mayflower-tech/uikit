@@ -60,6 +60,10 @@ export const Root: (props: RootProperties & RefAttributes<RootRef>) => ReactNode
         },
         //requestFrame = invalidate, because invalidate always causes another frame
         invalidate,
+        // @ts-expect-error
+        propertySignals.handlers,
+        propertySignals.hoverProps,
+        propertySignals.activeProps,
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [invalidate],

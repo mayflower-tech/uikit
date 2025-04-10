@@ -45,6 +45,7 @@ export class Root<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Pare
         }
         getCamera = () => cam
       }
+      // @ts-expect-error
       const internals = (this.internals = createRoot(
         computed(() => readReactive(this.pixelSizeSignal.value) ?? DEFAULT_PIXEL_SIZE),
         this.styleSignal,

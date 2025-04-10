@@ -29,6 +29,7 @@ export class Svg<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Paren
         this.contextSignal.value = undefined
         return
       }
+      // @ts-expect-error
       const internals = (this.internals = createSvg(
         parentContext,
         this.styleSignal,
