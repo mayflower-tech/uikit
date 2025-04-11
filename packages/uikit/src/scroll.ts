@@ -258,9 +258,9 @@ export function computedScrollHandlers(
         distanceHelper.divideScalar(root.pixelSize.peek())
 
         const timestamp = performance.now();
-        const deltaTime = timestamp - prevInteraction.timestamp;
+        const deltaTime = timestamp - (prevInteraction as any).timestamp;
 
-        if (distanceHelper.length() < 15 && deltaTime < 200 && event.pointerState?.type === 'xrController') {
+        if (distanceHelper.length() < 15 && deltaTime < 200 && (event as any).pointerState?.type === 'xrController') {
             return;
         }
         prevInteraction.localPoint.copy(localPointHelper)
