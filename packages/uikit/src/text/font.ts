@@ -4,7 +4,6 @@ import { MergedProperties } from '../properties/merged.js'
 import { Initializers } from '../utils.js'
 import { loadCachedFont } from './cache.js'
 import { computedInheritableProperty } from '../properties/index.js'
-import { inter } from '@pmndrs/msdfonts'
 
 export type FontFamilyWeightMap = Partial<Record<FontWeight, string | FontInfo>>
 
@@ -28,7 +27,7 @@ export type FontWeight = keyof typeof fontWeightNames | number
 export type FontFamilyProperties = { fontFamily?: string; fontWeight?: FontWeight }
 
 const defaultFontFamilyUrls: FontFamilies = {
-  inter,
+  inter: {},
 }
 
 export function computedFont(

@@ -256,6 +256,13 @@ export function computedScrollHandlers(
         object.current!.worldToLocal(localPointHelper.copy(event.point))
         distanceHelper.copy(localPointHelper).sub(prevInteraction.localPoint)
         distanceHelper.divideScalar(root.pixelSize.peek())
+
+        const timestamp = performance.now();
+        const deltaTime = timestamp - prevInteraction.timestamp;
+
+        if (distanceHelper.length() < 15 && deltaTime < 200 && event.pointerState?.type === 'xrController') {
+            return;
+        }
         prevInteraction.localPoint.copy(localPointHelper)
 
         if (prevInteraction.type === 'scroll-bar') {
@@ -275,8 +282,6 @@ export function computedScrollHandlers(
           scroll(event, distanceHelper.x, -distanceHelper.y, undefined, false)
           return
         }
-        const timestamp = performance.now()
-        const deltaTime = timestamp - prevInteraction.timestamp
         scroll(event, -distanceHelper.x, distanceHelper.y, deltaTime, true)
         prevInteraction.timestamp = timestamp
       },
