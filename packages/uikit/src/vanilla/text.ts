@@ -1,6 +1,7 @@
 import { AllOptionalProperties } from '../properties/default.js'
 import { createParentContextSignal, setupParentContextSignal, bindHandlers, Component } from './utils.js'
 import { ReadonlySignal, Signal, effect, signal, untracked } from '@preact/signals-core'
+import { DeepSignal, deepSignal } from 'deepsignal'
 import { TextProperties, createTextState, setupText } from '../components/text.js'
 import { MergedProperties } from '../properties/index.js'
 import { ThreeEventMap } from '../events.js'
@@ -8,7 +9,7 @@ import { ThreeEventMap } from '../events.js'
 export class Text<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Component<T> {
   private mergedProperties?: ReadonlySignal<MergedProperties>
   private readonly styleSignal: Signal<TextProperties<EM> | undefined> = signal(undefined)
-  private readonly propertiesSignal: Signal<TextProperties<EM> | undefined>
+  private readonly propertiesSignal: DeepSignal<TextProperties<EM>>
   private readonly defaultPropertiesSignal: Signal<AllOptionalProperties | undefined>
   private readonly textSignal: Signal<unknown | Signal<unknown> | Array<unknown | Signal<unknown>>>
   private readonly parentContextSignal = createParentContextSignal()
