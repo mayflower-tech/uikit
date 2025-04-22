@@ -2,6 +2,7 @@ import { Signal, effect } from '@preact/signals-core'
 import { Vector2Tuple } from 'three'
 import { ThreeMouseEvent, ThreePointerEvent } from './events.js'
 import { abortableEffect } from './utils.js'
+import { DeepSignal } from 'deepsignal'
 
 export type Listeners = ScrollListeners & LayoutListeners & ClippedListeners
 
@@ -32,7 +33,7 @@ export type ClippedListeners = {
 
 export function setupLayoutListeners(
   l1: Signal<LayoutListeners | undefined>,
-  l2: Signal<LayoutListeners | undefined>,
+  l2: DeepSignal<LayoutListeners | undefined>,
   size: Signal<Vector2Tuple | undefined>,
   abortSignal: AbortSignal,
 ) {
@@ -42,13 +43,13 @@ export function setupLayoutListeners(
       return
     }
     l1.peek()?.onSizeChange?.(...s)
-    l2.peek()?.onSizeChange?.(...s)
+    l2?.$onSizeChange?.peek()?.(...s)
   }, abortSignal)
 }
 
 export function setupClippedListeners(
   l1: Signal<ClippedListeners | undefined>,
-  l2: Signal<ClippedListeners | undefined>,
+  l2: DeepSignal<ClippedListeners | undefined>,
   isClippedSignal: Signal<boolean>,
   abortSignal: AbortSignal,
 ) {
@@ -60,6 +61,6 @@ export function setupClippedListeners(
       return
     }
     l1.peek()?.onIsClippedChange?.(isClipped)
-    l2.peek()?.onIsClippedChange?.(isClipped)
+    l2?.$onIsClippedChange?.peek()?.(isClipped)
   }, abortSignal)
 }

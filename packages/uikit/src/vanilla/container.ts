@@ -3,10 +3,11 @@ import { AllOptionalProperties } from '../properties/default.js'
 import { Signal, effect, signal, untracked } from '@preact/signals-core'
 import { Parent, createParentContextSignal, setupParentContextSignal, bindHandlers } from './utils.js'
 import { ThreeEventMap } from '../events.js'
+import { DeepSignal, deepSignal } from 'deepsignal'
 
 export class Container<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Parent<T> {
   private readonly styleSignal: Signal<ContainerProperties<EM> | undefined> = signal(undefined)
-  private readonly propertiesSignal: Signal<ContainerProperties<EM> | undefined>
+  private readonly propertiesSignal: DeepSignal<ContainerProperties<EM> | undefined>
   private readonly defaultPropertiesSignal: Signal<AllOptionalProperties | undefined>
   private readonly parentContextSignal = createParentContextSignal()
   private readonly unsubscribe: () => void
@@ -17,7 +18,7 @@ export class Container<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends
     super()
     this.matrixAutoUpdate = false
     setupParentContextSignal(this.parentContextSignal, this)
-    this.propertiesSignal = signal(properties)
+    this.propertiesSignal = deepSignal(properties ?? {})
     this.defaultPropertiesSignal = signal(defaultProperties)
     this.unsubscribe = effect(() => {
       const parentContext = this.parentContextSignal.value?.value

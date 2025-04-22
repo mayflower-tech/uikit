@@ -478,6 +478,9 @@ importers:
       commander:
         specifier: ^12.0.0
         version: 12.1.0
+      deepsignal:
+        specifier: ^1.6.0
+        version: 1.6.0(@preact/signals-core@1.8.0)
       ora:
         specifier: ^8.0.1
         version: 8.1.1

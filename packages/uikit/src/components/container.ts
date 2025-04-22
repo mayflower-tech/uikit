@@ -150,7 +150,7 @@ export function setupContainer<EM extends ThreeEventMap = ThreeEventMap>(
   state: ReturnType<typeof createContainerState>,
   parentCtx: ParentContext,
   style: Signal<ContainerProperties<EM> | undefined>,
-  properties: Signal<ContainerProperties<EM> | undefined>,
+  properties: DeepSignal<ContainerProperties<EM> | undefined>,
   object: Object3D,
   childrenContainer: Object3D,
   abortSignal: AbortSignal,
