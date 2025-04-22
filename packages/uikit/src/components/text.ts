@@ -1,6 +1,7 @@
 import { YogaProperties, createFlexNodeState } from '../flex/node.js'
 import { createHoverPropertyTransformers, setupCursorCleanup } from '../hover.js'
 import { computedIsClipped } from '../clipping.js'
+import { DeepSignal } from 'deepsignal'
 import { ScrollbarProperties } from '../scroll.js'
 import { WithAllAliases } from '../properties/alias.js'
 import { PanelProperties, setupInstancedPanel } from '../panel/instanced-panel.js'
@@ -76,7 +77,7 @@ export function createTextState<EM extends ThreeEventMap = ThreeEventMap>(
   textSignal: Signal<unknown | Signal<unknown> | Array<unknown | Signal<unknown>>>,
   fontFamilies: Signal<FontFamilies | undefined> | undefined,
   style: Signal<TextProperties<EM> | undefined>,
-  properties: Signal<TextProperties<EM> | undefined>,
+  properties: DeepSignal<TextProperties<EM> | undefined>,
   defaultProperties: Signal<AllOptionalProperties | undefined>,
 ) {
   const flexState = createFlexNodeState()
@@ -149,7 +150,7 @@ export function setupText<EM extends ThreeEventMap = ThreeEventMap>(
   state: ReturnType<typeof createTextState>,
   parentCtx: ParentContext,
   style: Signal<TextProperties<EM> | undefined>,
-  properties: Signal<TextProperties<EM> | undefined>,
+  properties: DeepSignal<TextProperties<EM> | undefined>,
   object: Object3D,
   abortSignal: AbortSignal,
 ) {

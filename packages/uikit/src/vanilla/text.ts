@@ -24,7 +24,7 @@ export class Text<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Comp
     super()
     this.matrixAutoUpdate = false
     setupParentContextSignal(this.parentContextSignal, this)
-    this.propertiesSignal = signal(properties)
+    this.propertiesSignal = deepSignal(properties ?? {})
     this.defaultPropertiesSignal = signal(defaultProperties)
     this.textSignal = signal(text)
 
@@ -73,7 +73,7 @@ export class Text<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Comp
   }
 
   setProperties(properties: TextProperties<EM> | undefined) {
-    this.propertiesSignal.value = properties
+    Object.assign(this.propertiesSignal, properties)
   }
 
   setDefaultProperties(properties: AllOptionalProperties) {
