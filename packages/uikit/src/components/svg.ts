@@ -1,4 +1,5 @@
 import { Signal, computed, signal } from '@preact/signals-core'
+import { DeepSignal } from 'deepsignal/core'
 import { Box3, Group, Mesh, MeshBasicMaterial, Object3D, Plane, ShapeGeometry, Vector3 } from 'three'
 import { Listeners } from '../index.js'
 import { ParentContext, RootContext } from '../context.js'
@@ -87,7 +88,7 @@ export function createSvgState<EM extends ThreeEventMap = ThreeEventMap>(
   parentCtx: ParentContext,
   objectRef: { current?: Object3D | null },
   style: Signal<SvgProperties<EM> | undefined>,
-  properties: Signal<SvgProperties<EM> | undefined>,
+  properties: DeepSignal<SvgProperties<EM> | undefined>,
   defaultProperties: Signal<AllOptionalProperties | undefined>,
 ) {
   const flexState = createFlexNodeState()
@@ -183,7 +184,7 @@ export function setupSvg<EM extends ThreeEventMap = ThreeEventMap>(
   state: ReturnType<typeof createSvgState>,
   parentCtx: ParentContext,
   style: Signal<SvgProperties<EM> | undefined>,
-  properties: Signal<SvgProperties<EM> | undefined>,
+  properties: DeepSignal<SvgProperties<EM> | undefined>,
   object: Object3D,
   childrenContainer: Object3D,
   abortSignal: AbortSignal,

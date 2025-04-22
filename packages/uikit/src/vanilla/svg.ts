@@ -8,7 +8,7 @@ import { ThreeEventMap } from '../events.js'
 export class Svg<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Parent<T> {
   private mergedProperties?: ReadonlySignal<MergedProperties>
   private readonly styleSignal: Signal<SvgProperties<EM> | undefined> = signal(undefined)
-  private readonly propertiesSignal: Signal<SvgProperties<EM> | undefined>
+  private readonly propertiesSignal: DeepSignal<SvgProperties<EM>>
   private readonly defaultPropertiesSignal: Signal<AllOptionalProperties | undefined>
   private readonly parentContextSignal = createParentContextSignal()
   private readonly unsubscribe: () => void
@@ -19,7 +19,7 @@ export class Svg<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Paren
     super()
     this.matrixAutoUpdate = false
     setupParentContextSignal(this.parentContextSignal, this)
-    this.propertiesSignal = signal(properties)
+    this.propertiesSignal = deepSignal(properties ?? {})
     this.defaultPropertiesSignal = signal(defaultProperties)
 
     this.unsubscribe = effect(() => {
@@ -72,7 +72,7 @@ export class Svg<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Paren
   }
 
   setProperties(properties: SvgProperties<EM> | undefined) {
-    this.propertiesSignal.value = properties
+    Object.assign(this.propertiesSignal, properties)
   }
 
   setDefaultProperties(properties: AllOptionalProperties) {
