@@ -11,7 +11,7 @@ export class Content<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends C
   private mergedProperties?: ReadonlySignal<MergedProperties>
   private readonly contentContainer: Object3D
   private readonly styleSignal: Signal<ContentProperties<EM> | undefined> = signal(undefined)
-  private readonly propertiesSignal: DeepSignal<ContentProperties<EM> | undefined>
+  private readonly propertiesSignal: DeepSignal<ContentProperties<EM>>
   private readonly defaultPropertiesSignal: Signal<AllOptionalProperties | undefined>
   private readonly parentContextSignal = createParentContextSignal()
   private readonly unsubscribe: () => void
@@ -101,7 +101,7 @@ export class Content<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends C
   }
 
   setProperties(properties: ContentProperties<EM> | undefined) {
-    this.propertiesSignal.value = properties
+    Object.assign(this.propertiesSignal, properties)
   }
 
   setDefaultProperties(properties: AllOptionalProperties) {

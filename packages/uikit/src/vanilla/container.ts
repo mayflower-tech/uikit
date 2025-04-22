@@ -7,7 +7,7 @@ import { DeepSignal, deepSignal } from 'deepsignal'
 
 export class Container<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Parent<T> {
   private readonly styleSignal: Signal<ContainerProperties<EM> | undefined> = signal(undefined)
-  private readonly propertiesSignal: DeepSignal<ContainerProperties<EM> | undefined>
+  private readonly propertiesSignal: DeepSignal<ContainerProperties<EM>>
   private readonly defaultPropertiesSignal: Signal<AllOptionalProperties | undefined>
   private readonly parentContextSignal = createParentContextSignal()
   private readonly unsubscribe: () => void
@@ -70,7 +70,7 @@ export class Container<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends
   }
 
   setProperties(properties: ContainerProperties<EM> | undefined) {
-    this.propertiesSignal.value = properties
+    Object.assign(this.propertiesSignal, properties)
   }
 
   setDefaultProperties(properties: AllOptionalProperties) {
