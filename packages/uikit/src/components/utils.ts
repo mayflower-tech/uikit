@@ -16,6 +16,7 @@ import {
   computedInheritableProperty,
 } from '../properties/index.js'
 import { AllowedPointerEventsType, PointerEventsProperties } from '../internals.js'
+import { DeepSignal } from 'deepsignal/core'
 
 export function disposeGroup(object: Object3D | undefined) {
   object?.traverse((mesh) => {
@@ -151,7 +152,7 @@ const eventHandlerKeys: Array<keyof EventHandlers> = [
 
 export function computedHandlers(
   style: Signal<Properties | undefined>,
-  propertiesSignal: Signal<Properties | undefined>,
+  propertiesSignal: DeepSignal<Properties | undefined>,
   defaultProperties: Signal<AllOptionalProperties | undefined>,
   hoveredSignal: Signal<Array<number>>,
   activeSignal: Signal<Array<number>>,
@@ -160,25 +161,17 @@ export function computedHandlers(
 ) {
   return computed(() => {
     const handlers: EventHandlers = {}
-    const properties = propertiesSignal.value
-    if (properties != null) {
+    if (propertiesSignal != null) {
       for (const key of eventHandlerKeys) {
-        const handler = properties[key]
+        const handler = propertiesSignal[key]
         if (handler != null) {
           handlers[key] = handler as any
         }
       }
     }
     addHandlers(handlers, dynamicHandlers?.value)
-    addHoverHandlers(
-      handlers,
-      style.value,
-      propertiesSignal.value,
-      defaultProperties.value,
-      hoveredSignal,
-      defaultCursor,
-    )
-    addActiveHandlers(handlers, style.value, propertiesSignal.value, defaultProperties.value, activeSignal)
+    addHoverHandlers(handlers, style.value, propertiesSignal, defaultProperties.value, hoveredSignal, defaultCursor)
+    addActiveHandlers(handlers, style.value, propertiesSignal, defaultProperties.value, activeSignal)
     return handlers
   })
 }
@@ -222,7 +215,7 @@ export function addHandler<T extends { [Key in string]?: (e: any) => void }, K e
 
 export function computedMergedProperties(
   style: Signal<Properties | undefined>,
-  properties: Signal<Properties | undefined>,
+  properties: DeepSignal<Properties | undefined>,
   defaultProperties: Signal<AllOptionalProperties | undefined>,
   postTransformers: PropertyTransformers,
   preTransformers?: PropertyTransformers,
@@ -231,7 +224,7 @@ export function computedMergedProperties(
   return computed(() => {
     const merged = new MergedProperties(preTransformers)
     onInit?.(merged)
-    merged.addAll(style.value, properties.value, defaultProperties.value, postTransformers)
+    merged.addAll(style.value, properties, defaultProperties.value, postTransformers)
     return merged
   })
 }

@@ -16,6 +16,7 @@ import {
 import { ParentContext, RootContext } from './context.js'
 import { ScrollListeners } from './listeners.js'
 import { EventHandlers, ThreeMouseEvent, ThreePointerEvent } from './events.js'
+import { DeepSignal } from 'deepsignal/core'
 
 const distanceHelper = new Vector3()
 const localPointHelper = new Vector3()
@@ -83,7 +84,7 @@ export type ScrollableComponentState = {
 
 export function computedScrollHandlers(
   state: ScrollableComponentState,
-  listeners: Signal<ScrollListeners | undefined>,
+  listeners: DeepSignal<ScrollListeners | undefined>,
   objectRef: { current?: Object3D | null },
 ) {
   const isScrollable = computed(() => state.scrollable.value?.some((scrollable) => scrollable) ?? false)
@@ -215,7 +216,7 @@ export function computedScrollHandlers(
 
 function scroll(
   state: ScrollableComponentState,
-  listeners: Signal<ScrollListeners | undefined>,
+  listeners: DeepSignal<ScrollListeners | undefined>,
   event: ThreePointerEvent | ThreeMouseEvent | undefined,
   deltaX: number,
   deltaY: number,
@@ -250,7 +251,7 @@ function scroll(
       wasScrolledY || Math.min(y, (maxY ?? 0) - y) > 5,
     )
   }
-  const preventScroll = listeners.peek()?.onScroll?.(newX, newY, state.scrollPosition, event)
+  const preventScroll = listeners?.$onScroll?.peek()?.(newX, newY, state.scrollPosition, event)
   if (preventScroll === false || (x === newX && y === newY)) {
     return
   }

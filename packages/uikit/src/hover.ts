@@ -4,6 +4,7 @@ import { PropertyTransformers } from './properties/merged.js'
 import { EventHandlers } from './events.js'
 import { addHandler } from './components/index.js'
 import { AllOptionalProperties, traverseProperties } from './properties/index.js'
+import { DeepSignal } from 'deepsignal/core'
 
 export type WithHover<T> = T & {
   cursor?: string
@@ -20,7 +21,7 @@ export function setupCursorCleanup(hoveredSignal: Signal<Array<number>>, abortSi
 export function addHoverHandlers(
   target: EventHandlers,
   style: WithHover<{}> | undefined,
-  properties: WithHover<{}> | undefined,
+  properties: DeepSignal<WithHover<{}> | undefined>,
   defaultProperties: AllOptionalProperties | undefined,
   hoveredSignal: Signal<Array<number>>,
   defaultCursor?: string,

@@ -46,6 +46,7 @@ import {
   Properties,
 } from '../internals.js'
 import { Object3D } from 'three'
+import { DeepSignal } from 'deepsignal/core'
 
 export type InheritableContainerProperties = WithClasses<
   WithConditionals<
@@ -73,7 +74,7 @@ export function createContainerState<EM extends ThreeEventMap = ThreeEventMap>(
   parentCtx: ParentContext,
   objectRef: { current?: Object3D | null },
   style: Signal<ContainerProperties<EM> | undefined>,
-  properties: Signal<ContainerProperties<EM> | undefined>,
+  properties: DeepSignal<ContainerProperties<EM> | undefined>,
   defaultProperties: Signal<AllOptionalProperties | undefined>,
 ) {
   const flexState = createFlexNodeState()

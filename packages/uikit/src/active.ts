@@ -3,6 +3,7 @@ import { AllOptionalProperties, Properties, WithClasses, traverseProperties } fr
 import { createConditionalPropertyTranslator } from './utils.js'
 import { EventHandlers, ThreePointerEvent } from './events.js'
 import { addHandler } from './components/index.js'
+import { DeepSignal } from 'deepsignal/core'
 
 export type WithActive<T> = T & {
   active?: T
@@ -14,7 +15,7 @@ export type ActiveEventHandlers = Pick<EventHandlers, 'onPointerDown' | 'onPoint
 export function addActiveHandlers(
   target: EventHandlers,
   style: (WithClasses<WithActive<Properties>> & EventHandlers) | undefined,
-  properties: (WithClasses<WithActive<Properties>> & EventHandlers) | undefined,
+  properties: DeepSignal<(WithClasses<WithActive<Properties>> & EventHandlers) | undefined>,
   defaultProperties: AllOptionalProperties | undefined,
   activeSignal: Signal<Array<number>>,
 ): void {
