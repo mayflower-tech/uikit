@@ -127,7 +127,7 @@ export function createSvgState<EM extends ThreeEventMap = ThreeEventMap>(
   )
 
   const orderInfo = computedOrderInfo(undefined, 'zIndexOffset', ElementType.Svg, undefined, backgroundOrderInfo)
-  const src = computed(() => readReactive(style.value?.src) ?? readReactive(properties.value?.src))
+  const src = computed(() => readReactive(style.value?.src) ?? readReactive(properties.$src))
 
   const scrollPosition = createScrollPosition()
   const childrenMatrix = computedGlobalScrollMatrix(scrollPosition, globalMatrix, parentCtx.root.pixelSize)
