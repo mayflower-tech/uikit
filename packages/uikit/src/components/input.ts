@@ -1,6 +1,7 @@
 import { FlexNodeState, YogaProperties, createFlexNodeState } from '../flex/index.js'
 import { createHoverPropertyTransformers, setupCursorCleanup } from '../hover.js'
 import { computedIsClipped } from '../clipping.js'
+import { DeepSignal } from 'deepsignal/core'
 import { ScrollbarProperties } from '../scroll.js'
 import { WithAllAliases } from '../properties/alias.js'
 import { PanelProperties, setupInstancedPanel } from '../panel/instanced-panel.js'
@@ -122,7 +123,7 @@ export function createInputState<EM extends ThreeEventMap = ThreeEventMap>(
   parentCtx: ParentContext,
   fontFamilies: Signal<FontFamilies | undefined>,
   style: Signal<InputProperties<EM> | undefined>,
-  properties: Signal<InputProperties<EM> | undefined>,
+  properties: DeepSignal<InputProperties<EM> | undefined>,
   defaultProperties: Signal<AllOptionalProperties | undefined>,
 ) {
   const flexState = createFlexNodeState()
@@ -276,7 +277,7 @@ export function setupInput<EM extends ThreeEventMap = ThreeEventMap>(
   state: ReturnType<typeof createInputState>,
   parentCtx: ParentContext,
   style: Signal<InputProperties<EM> | undefined>,
-  properties: Signal<InputProperties<EM> | undefined>,
+  properties: DeepSignal<InputProperties<EM> | undefined>,
   defaultProperties: Signal<AllOptionalProperties | undefined>,
   object: Object3D,
   abortSignal: AbortSignal,

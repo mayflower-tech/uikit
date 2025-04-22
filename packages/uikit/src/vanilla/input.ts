@@ -1,6 +1,7 @@
 import { AllOptionalProperties } from '../properties/default.js'
 import { createParentContextSignal, setupParentContextSignal, bindHandlers, Component } from './utils.js'
 import { ReadonlySignal, Signal, effect, signal, untracked } from '@preact/signals-core'
+import { DeepSignal, deepSignal } from 'deepsignal'
 import { InputProperties, createInputState, setupInput } from '../components/input.js'
 import { MergedProperties } from '../properties/index.js'
 import { ThreeEventMap } from '../events.js'
@@ -8,7 +9,7 @@ import { ThreeEventMap } from '../events.js'
 export class Input<T = {}, Em extends ThreeEventMap = ThreeEventMap> extends Component<T> {
   private mergedProperties?: ReadonlySignal<MergedProperties>
   private readonly styleSignal: Signal<InputProperties<Em> | undefined> = signal(undefined)
-  private readonly propertiesSignal: Signal<InputProperties<Em> | undefined>
+  private readonly propertiesSignal: DeepSignal<InputProperties<Em>>
   private readonly defaultPropertiesSignal: Signal<AllOptionalProperties | undefined>
   private readonly parentContextSignal = createParentContextSignal()
   private readonly unsubscribe: () => void
@@ -19,7 +20,7 @@ export class Input<T = {}, Em extends ThreeEventMap = ThreeEventMap> extends Com
     super()
     this.matrixAutoUpdate = false
     setupParentContextSignal(this.parentContextSignal, this)
-    this.propertiesSignal = signal(properties)
+    this.propertiesSignal = deepSignal(properties ?? {})
     this.defaultPropertiesSignal = signal(defaultProperties)
 
     this.unsubscribe = effect(() => {
@@ -70,7 +71,7 @@ export class Input<T = {}, Em extends ThreeEventMap = ThreeEventMap> extends Com
   }
 
   setProperties(properties: InputProperties<Em> | undefined) {
-    this.propertiesSignal.value = properties
+    Object.assign(this.propertiesSignal, properties)
   }
 
   setDefaultProperties(properties: AllOptionalProperties) {
