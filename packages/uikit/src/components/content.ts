@@ -10,6 +10,7 @@ import { createResponsivePropertyTransformers } from '../responsive.js'
 import { ElementType, OrderInfo, ZIndexProperties, computedOrderInfo, setupRenderOrder } from '../order.js'
 import { createActivePropertyTransfomers } from '../active.js'
 import { Signal, computed, signal, untracked } from '@preact/signals-core'
+import { DeepSignal } from 'deepsignal/core'
 import {
   VisibilityProperties,
   WithConditionals,
@@ -70,7 +71,7 @@ export type ContentProperties<EM extends ThreeEventMap = ThreeEventMap> = Inheri
 export function createContentState<EM extends ThreeEventMap = ThreeEventMap>(
   parentCtx: ParentContext,
   style: Signal<ContentProperties<EM> | undefined>,
-  properties: Signal<ContentProperties<EM> | undefined>,
+  properties: DeepSignal<ContentProperties<EM> | undefined>,
   defaultProperties: Signal<AllOptionalProperties | undefined>,
   contentContainerRef: { current?: Object3D | null },
 ) {
@@ -163,7 +164,7 @@ export function setupContent<EM extends ThreeEventMap = ThreeEventMap>(
   state: ReturnType<typeof createContentState>,
   parentCtx: ParentContext,
   style: Signal<ContentProperties<EM> | undefined>,
-  properties: Signal<ContentProperties<EM> | undefined>,
+  properties: DeepSignal<ContentProperties<EM> | undefined>,
   object: Object3D,
   contentContainer: Object3D,
   abortSignal: AbortSignal,

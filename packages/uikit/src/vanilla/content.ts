@@ -2,6 +2,7 @@ import { Object3D, Object3DEventMap } from 'three'
 import { AllOptionalProperties } from '../properties/default.js'
 import { createParentContextSignal, setupParentContextSignal, bindHandlers, Component } from './utils.js'
 import { ReadonlySignal, Signal, effect, signal, untracked } from '@preact/signals-core'
+import { DeepSignal, deepSignal } from 'deepsignal'
 import { ContentProperties, setupContent, createContentState } from '../components/index.js'
 import { MergedProperties } from '../properties/index.js'
 import { ThreeEventMap } from '../events.js'
@@ -10,7 +11,7 @@ export class Content<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends C
   private mergedProperties?: ReadonlySignal<MergedProperties>
   private readonly contentContainer: Object3D
   private readonly styleSignal: Signal<ContentProperties<EM> | undefined> = signal(undefined)
-  private readonly propertiesSignal: Signal<ContentProperties<EM> | undefined>
+  private readonly propertiesSignal: DeepSignal<ContentProperties<EM> | undefined>
   private readonly defaultPropertiesSignal: Signal<AllOptionalProperties | undefined>
   private readonly parentContextSignal = createParentContextSignal()
   private readonly unsubscribe: () => void
@@ -21,7 +22,7 @@ export class Content<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends C
     super()
     this.matrixAutoUpdate = false
     setupParentContextSignal(this.parentContextSignal, this)
-    this.propertiesSignal = signal(properties)
+    this.propertiesSignal = deepSignal(properties ?? {})
     this.defaultPropertiesSignal = signal(defaultProperties)
     //setting up the threejs elements
     this.contentContainer = new Object3D()
