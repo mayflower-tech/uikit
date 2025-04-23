@@ -2,7 +2,7 @@ import { Signal, effect } from '@preact/signals-core'
 import { Vector2Tuple } from 'three'
 import { ThreeMouseEvent, ThreePointerEvent } from './events.js'
 import { abortableEffect } from './utils.js'
-import { DeepSignal } from 'deepsignal'
+import { DeepSignal } from 'deepsignal/core'
 
 export type Listeners = ScrollListeners & LayoutListeners & ClippedListeners
 

@@ -10,7 +10,7 @@ import type {
   InheritableInputProperties,
   InheritableSvgProperties,
 } from '../components/index.js'
-import { DeepSignal } from 'deepsignal'
+import { DeepSignal } from 'deepsignal/core'
 
 export type AllOptionalProperties =
   | InheritableContainerProperties

@@ -4,7 +4,7 @@ import { ReactNode, forwardRef, useEffect, useMemo, useState } from 'react'
 import { Object3D } from 'three'
 import { useDefaultProperties } from './default.js'
 import { AllOptionalProperties } from '@pmndrs/uikit/internals'
-import { deepSignal } from 'deepsignal'
+import { deepSignal } from 'deepsignal/core'
 
 export type R3FEventMap = {
   mouse: ThreeEvent<MouseEvent>

@@ -1,7 +1,7 @@
 import { AllOptionalProperties } from '../properties/default.js'
 import { createParentContextSignal, setupParentContextSignal, bindHandlers, Component } from './utils.js'
 import { ReadonlySignal, Signal, effect, signal, untracked } from '@preact/signals-core'
-import { DeepSignal, deepSignal } from 'deepsignal'
+import { DeepSignal, deepSignal } from 'deepsignal/core'
 import { TextProperties, createTextState, setupText } from '../components/text.js'
 import { MergedProperties } from '../properties/index.js'
 import { ThreeEventMap } from '../events.js'

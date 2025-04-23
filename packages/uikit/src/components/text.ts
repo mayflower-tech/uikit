@@ -1,7 +1,7 @@
 import { YogaProperties, createFlexNodeState } from '../flex/node.js'
 import { createHoverPropertyTransformers, setupCursorCleanup } from '../hover.js'
 import { computedIsClipped } from '../clipping.js'
-import { DeepSignal } from 'deepsignal'
+import { DeepSignal } from 'deepsignal/core'
 import { ScrollbarProperties } from '../scroll.js'
 import { WithAllAliases } from '../properties/alias.js'
 import { PanelProperties, setupInstancedPanel } from '../panel/instanced-panel.js'

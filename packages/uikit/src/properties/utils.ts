@@ -1,7 +1,7 @@
 import { Signal, computed } from '@preact/signals-core'
 import { MergedProperties } from './merged.js'
 import { readReactive } from '../utils.js'
-import { DeepSignal } from 'deepsignal'
+import { DeepSignal } from 'deepsignal/core'
 
 export function computedInheritableProperty<T>(
   propertiesSignal: Signal<MergedProperties>,

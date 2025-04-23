@@ -47,7 +47,7 @@ import { darkPropertyTransformers } from '../dark.js'
 import { computedInheritableProperty } from '../properties/index.js'
 import { getDefaultPanelMaterialConfig, PointerEventsProperties } from '../panel/index.js'
 import { EventHandlers, ThreeEventMap } from '../events.js'
-import { DeepSignal } from 'deepsignal'
+import { DeepSignal } from 'deepsignal/core'
 
 export type InheritableRootProperties = WithClasses<
   WithConditionals<

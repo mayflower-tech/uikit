@@ -6,7 +6,7 @@ import { CustomContainerProperties, createCustomContainerState, setupCustomConta
 import { panelGeometry } from '../panel/index.js'
 import { MergedProperties } from '../properties/index.js'
 import { ThreeEventMap } from '../events.js'
-import { DeepSignal, deepSignal } from 'deepsignal'
+import { DeepSignal, deepSignal } from 'deepsignal/core'
 
 export class CustomContainer<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Component<T> {
   private readonly styleSignal: Signal<CustomContainerProperties<EM> | undefined> = signal(undefined)

@@ -3,7 +3,7 @@ import { AllOptionalProperties } from '../properties/default.js'
 import { Parent, createParentContextSignal, setupParentContextSignal, bindHandlers } from './utils.js'
 import { Signal, effect, signal, untracked } from '@preact/signals-core'
 import { ThreeEventMap } from '../events.js'
-import { DeepSignal, deepSignal } from 'deepsignal'
+import { DeepSignal, deepSignal } from 'deepsignal/core'
 
 export class Image<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Parent<T> {
   private readonly styleSignal: Signal<ImageProperties<EM> | undefined> = signal(undefined)

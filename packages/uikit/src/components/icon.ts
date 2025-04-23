@@ -37,7 +37,7 @@ import { PanelGroupProperties, computedPanelGroupDependencies, getDefaultPanelMa
 import { darkPropertyTransformers } from '../dark.js'
 import { MergedProperties } from '../properties/index.js'
 import { ThreeEventMap } from '../events.js'
-import { DeepSignal } from 'deepsignal'
+import { DeepSignal } from 'deepsignal/core'
 
 export type InheritableIconProperties = WithClasses<
   WithConditionals<

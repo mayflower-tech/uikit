@@ -6,7 +6,7 @@ import { Parent, bindHandlers } from './utils.js'
 import { readReactive } from '../utils.js'
 import { FontFamilies } from '../text/index.js'
 import { ThreeEventMap } from '../events.js'
-import { DeepSignal, deepSignal } from 'deepsignal'
+import { DeepSignal, deepSignal } from 'deepsignal/core'
 
 export class Root<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Parent<T> {
   protected readonly styleSignal: Signal<RootProperties<EM> | undefined> = signal(undefined)

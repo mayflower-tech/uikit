@@ -76,7 +76,7 @@ import { createResponsivePropertyTransformers } from '../responsive.js'
 import { AppearanceProperties } from './svg.js'
 import { darkPropertyTransformers } from '../dark.js'
 import { ThreeEventMap } from '../events.js'
-import { DeepSignal } from 'deepsignal'
+import { DeepSignal } from 'deepsignal/core'
 
 export type ImageFit = 'cover' | 'fill'
 const defaultImageFit: ImageFit = 'fill'

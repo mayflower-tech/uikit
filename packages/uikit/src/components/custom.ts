@@ -29,7 +29,7 @@ import { darkPropertyTransformers } from '../dark.js'
 import { PointerEventsProperties, RenderProperties, ShadowProperties, makeClippedCast } from '../panel/index.js'
 import { EventHandlers, ThreeEventMap } from '../events.js'
 import { abortableEffect } from '../utils.js'
-import { DeepSignal } from 'deepsignal'
+import { DeepSignal } from 'deepsignal/core'
 
 export type InheritableCustomContainerProperties = WithClasses<
   WithConditionals<

@@ -39,7 +39,6 @@ export const Input: (props: InputProperties & RefAttributes<InputRef>) => ReactN
   //allows to not get a eslint error because of dependencies (we deliberatly never update this ref)
   const internals = useMemo(
     () =>
-      // @ts-expect-error
       createInputState<R3FEventMap>(
         parent,
         fontFamilies,

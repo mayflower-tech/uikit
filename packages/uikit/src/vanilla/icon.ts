@@ -4,7 +4,7 @@ import { ReadonlySignal, Signal, effect, signal, untracked } from '@preact/signa
 import { IconProperties, createIconState, setupIcon } from '../components/icon.js'
 import { MergedProperties } from '../properties/index.js'
 import { ThreeEventMap } from '../events.js'
-import { deepSignal, DeepSignal } from 'deepsignal'
+import { deepSignal, DeepSignal } from 'deepsignal/core'
 
 export class Icon<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Component<T> {
   private readonly styleSignal: Signal<IconProperties<EM> | undefined> = signal(undefined)
