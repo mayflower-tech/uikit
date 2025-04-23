@@ -45,7 +45,6 @@ export function usePropertySignals<T extends object>(properties: T) {
     }),
     [],
   )
-  // propertySignals.properties = properties
   Object.assign(propertySignals.properties, properties)
   propertySignals.default.value = useDefaultProperties()
   return propertySignals
