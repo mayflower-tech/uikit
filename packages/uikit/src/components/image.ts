@@ -76,6 +76,7 @@ import { createResponsivePropertyTransformers } from '../responsive.js'
 import { AppearanceProperties } from './svg.js'
 import { darkPropertyTransformers } from '../dark.js'
 import { ThreeEventMap } from '../events.js'
+import { DeepSignal } from 'deepsignal'
 
 export type ImageFit = 'cover' | 'fill'
 const defaultImageFit: ImageFit = 'fill'
@@ -118,7 +119,7 @@ export function createImageState<EM extends ThreeEventMap = ThreeEventMap>(
   parentCtx: ParentContext,
   objectRef: { current?: Object3D | null },
   style: Signal<ImageProperties<EM> | undefined>,
-  properties: Signal<ImageProperties<EM> | undefined>,
+  properties: DeepSignal<ImageProperties<EM>>,
   defaultProperties: Signal<AllOptionalProperties | undefined>,
 ) {
   const flexState = createFlexNodeState()
@@ -126,7 +127,7 @@ export function createImageState<EM extends ThreeEventMap = ThreeEventMap>(
   const hoveredSignal = signal<Array<number>>([])
   const activeSignal = signal<Array<number>>([])
 
-  const src = computed(() => readReactive(style.value?.src) ?? readReactive(properties.value?.src))
+  const src = computed(() => readReactive(style.value?.src) ?? readReactive(properties.src))
 
   const textureAspectRatio = computed(() => {
     const tex = texture.value
@@ -209,7 +210,7 @@ export function setupImage<EM extends ThreeEventMap = ThreeEventMap>(
   state: ReturnType<typeof createImageState>,
   parentCtx: ParentContext,
   style: Signal<ImageProperties<EM> | undefined>,
-  properties: Signal<ImageProperties<EM> | undefined>,
+  properties: DeepSignal<ImageProperties<EM>>,
   object: Object3D,
   childrenContainer: Object3D,
   abortSignal: AbortSignal,

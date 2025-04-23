@@ -37,6 +37,7 @@ import { PanelGroupProperties, computedPanelGroupDependencies, getDefaultPanelMa
 import { darkPropertyTransformers } from '../dark.js'
 import { MergedProperties } from '../properties/index.js'
 import { ThreeEventMap } from '../events.js'
+import { DeepSignal } from 'deepsignal'
 
 export type InheritableIconProperties = WithClasses<
   WithConditionals<
@@ -66,7 +67,7 @@ export function createIconState<EM extends ThreeEventMap = ThreeEventMap>(
   svgWidth: number,
   svgHeight: number,
   style: Signal<IconProperties<EM> | undefined>,
-  properties: Signal<IconProperties<EM> | undefined>,
+  properties: DeepSignal<IconProperties<EM>>,
   defaultProperties: Signal<AllOptionalProperties | undefined>,
 ) {
   const flexState = createFlexNodeState()
@@ -144,7 +145,7 @@ export function setupIcon<EM extends ThreeEventMap = ThreeEventMap>(
   state: ReturnType<typeof createIconState>,
   parentCtx: ParentContext,
   style: Signal<IconProperties<EM> | undefined>,
-  properties: Signal<IconProperties<EM> | undefined>,
+  properties: DeepSignal<IconProperties<EM>>,
   object: Object3D,
   abortSignal: AbortSignal,
 ) {

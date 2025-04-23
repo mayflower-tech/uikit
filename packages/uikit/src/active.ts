@@ -15,13 +15,13 @@ export type ActiveEventHandlers = Pick<EventHandlers, 'onPointerDown' | 'onPoint
 export function addActiveHandlers(
   target: EventHandlers,
   style: (WithClasses<WithActive<Properties>> & EventHandlers) | undefined,
-  properties: DeepSignal<(WithClasses<WithActive<Properties>> & EventHandlers) | undefined>,
+  properties: DeepSignal<WithClasses<WithActive<Properties>> & EventHandlers>,
   defaultProperties: AllOptionalProperties | undefined,
   activeSignal: Signal<Array<number>>,
 ): void {
   let activePropertiesExist = false
 
-  traverseProperties(style, defaultProperties, properties, (p) => {
+  traverseProperties(style, properties, defaultProperties, (p) => {
     if ('active' in p) {
       activePropertiesExist = true
     }

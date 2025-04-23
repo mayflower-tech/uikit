@@ -29,6 +29,7 @@ import { darkPropertyTransformers } from '../dark.js'
 import { PointerEventsProperties, RenderProperties, ShadowProperties, makeClippedCast } from '../panel/index.js'
 import { EventHandlers, ThreeEventMap } from '../events.js'
 import { abortableEffect } from '../utils.js'
+import { DeepSignal } from 'deepsignal'
 
 export type InheritableCustomContainerProperties = WithClasses<
   WithConditionals<
@@ -55,7 +56,7 @@ export type CustomContainerProperties<EM extends ThreeEventMap = ThreeEventMap> 
 export function createCustomContainerState<EM extends ThreeEventMap = ThreeEventMap>(
   parentCtx: ParentContext,
   style: Signal<CustomContainerProperties<EM> | undefined>,
-  properties: Signal<CustomContainerProperties<EM> | undefined>,
+  properties: DeepSignal<CustomContainerProperties<EM>>,
   defaultProperties: Signal<AllOptionalProperties | undefined>,
 ) {
   const flexState = createFlexNodeState()
@@ -106,7 +107,7 @@ export function setupCustomContainer<EM extends ThreeEventMap = ThreeEventMap>(
   state: ReturnType<typeof createCustomContainerState>,
   parentCtx: ParentContext,
   style: Signal<CustomContainerProperties<EM> | undefined>,
-  properties: Signal<CustomContainerProperties<EM> | undefined>,
+  properties: DeepSignal<CustomContainerProperties<EM>>,
   object: Object3D,
   mesh: Mesh,
   abortSignal: AbortSignal,

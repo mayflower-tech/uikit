@@ -47,6 +47,7 @@ import { darkPropertyTransformers } from '../dark.js'
 import { computedInheritableProperty } from '../properties/index.js'
 import { getDefaultPanelMaterialConfig, PointerEventsProperties } from '../panel/index.js'
 import { EventHandlers, ThreeEventMap } from '../events.js'
+import { DeepSignal } from 'deepsignal'
 
 export type InheritableRootProperties = WithClasses<
   WithConditionals<
@@ -83,7 +84,7 @@ export function createRootState<EM extends ThreeEventMap = ThreeEventMap>(
   objectRef: { current?: Object3D | null },
   pixelSize: Signal<number>,
   style: Signal<RootProperties<EM> | undefined>,
-  properties: Signal<RootProperties<EM> | undefined>,
+  properties: DeepSignal<RootProperties<EM>>,
   defaultProperties: Signal<AllOptionalProperties | undefined>,
   getCamera: () => Camera,
   renderer: WebGLRenderer,
@@ -184,7 +185,7 @@ export function createRootState<EM extends ThreeEventMap = ThreeEventMap>(
 export function setupRoot<EM extends ThreeEventMap = ThreeEventMap>(
   state: ReturnType<typeof createRootState>,
   style: Signal<RootProperties<EM> | undefined>,
-  properties: Signal<RootProperties<EM> | undefined>,
+  properties: DeepSignal<RootProperties<EM>>,
   object: Object3D,
   childrenContainer: Object3D,
   abortSignal: AbortSignal,

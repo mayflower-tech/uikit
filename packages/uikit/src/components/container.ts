@@ -74,7 +74,7 @@ export function createContainerState<EM extends ThreeEventMap = ThreeEventMap>(
   parentCtx: ParentContext,
   objectRef: { current?: Object3D | null },
   style: Signal<ContainerProperties<EM> | undefined>,
-  properties: DeepSignal<ContainerProperties<EM> | undefined>,
+  properties: DeepSignal<ContainerProperties<EM>>,
   defaultProperties: Signal<AllOptionalProperties | undefined>,
 ) {
   const flexState = createFlexNodeState()
@@ -150,7 +150,7 @@ export function setupContainer<EM extends ThreeEventMap = ThreeEventMap>(
   state: ReturnType<typeof createContainerState>,
   parentCtx: ParentContext,
   style: Signal<ContainerProperties<EM> | undefined>,
-  properties: DeepSignal<ContainerProperties<EM> | undefined>,
+  properties: DeepSignal<ContainerProperties<EM>>,
   object: Object3D,
   childrenContainer: Object3D,
   abortSignal: AbortSignal,

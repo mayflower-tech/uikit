@@ -88,7 +88,7 @@ export function createSvgState<EM extends ThreeEventMap = ThreeEventMap>(
   parentCtx: ParentContext,
   objectRef: { current?: Object3D | null },
   style: Signal<SvgProperties<EM> | undefined>,
-  properties: DeepSignal<SvgProperties<EM> | undefined>,
+  properties: DeepSignal<SvgProperties<EM>>,
   defaultProperties: Signal<AllOptionalProperties | undefined>,
 ) {
   const flexState = createFlexNodeState()
@@ -184,7 +184,7 @@ export function setupSvg<EM extends ThreeEventMap = ThreeEventMap>(
   state: ReturnType<typeof createSvgState>,
   parentCtx: ParentContext,
   style: Signal<SvgProperties<EM> | undefined>,
-  properties: DeepSignal<SvgProperties<EM> | undefined>,
+  properties: DeepSignal<SvgProperties<EM>>,
   object: Object3D,
   childrenContainer: Object3D,
   abortSignal: AbortSignal,
@@ -216,6 +216,7 @@ export function setupSvg<EM extends ThreeEventMap = ThreeEventMap>(
     loadSvg,
     disposeGroup,
     abortSignal,
+    // @ts-expect-error
     state.src,
     parentCtx.root,
     clippingPlanes,

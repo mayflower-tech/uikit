@@ -77,7 +77,7 @@ export function createTextState<EM extends ThreeEventMap = ThreeEventMap>(
   textSignal: Signal<unknown | Signal<unknown> | Array<unknown | Signal<unknown>>>,
   fontFamilies: Signal<FontFamilies | undefined> | undefined,
   style: Signal<TextProperties<EM> | undefined>,
-  properties: DeepSignal<TextProperties<EM> | undefined>,
+  properties: DeepSignal<TextProperties<EM>>,
   defaultProperties: Signal<AllOptionalProperties | undefined>,
 ) {
   const flexState = createFlexNodeState()
@@ -150,7 +150,7 @@ export function setupText<EM extends ThreeEventMap = ThreeEventMap>(
   state: ReturnType<typeof createTextState>,
   parentCtx: ParentContext,
   style: Signal<TextProperties<EM> | undefined>,
-  properties: DeepSignal<TextProperties<EM> | undefined>,
+  properties: DeepSignal<TextProperties<EM>>,
   object: Object3D,
   abortSignal: AbortSignal,
 ) {

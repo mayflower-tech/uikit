@@ -4,10 +4,11 @@ import { ReadonlySignal, Signal, effect, signal, untracked } from '@preact/signa
 import { IconProperties, createIconState, setupIcon } from '../components/icon.js'
 import { MergedProperties } from '../properties/index.js'
 import { ThreeEventMap } from '../events.js'
+import { deepSignal, DeepSignal } from 'deepsignal'
 
 export class Icon<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Component<T> {
   private readonly styleSignal: Signal<IconProperties<EM> | undefined> = signal(undefined)
-  private readonly propertiesSignal: Signal<IconProperties<EM> | undefined>
+  private readonly propertiesSignal: DeepSignal<IconProperties<EM>>
   private readonly defaultPropertiesSignal: Signal<AllOptionalProperties | undefined>
   private readonly parentContextSignal = createParentContextSignal()
   private readonly unsubscribe: () => void
@@ -24,7 +25,7 @@ export class Icon<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Comp
     super()
     this.matrixAutoUpdate = false
     setupParentContextSignal(this.parentContextSignal, this)
-    this.propertiesSignal = signal(properties)
+    this.propertiesSignal = deepSignal(properties ?? {})
     this.defaultPropertiesSignal = signal(defaultProperties)
     this.unsubscribe = effect(() => {
       const parentContext = this.parentContextSignal.value?.value
@@ -68,7 +69,7 @@ export class Icon<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Comp
   }
 
   setProperties(properties: IconProperties<EM> | undefined) {
-    this.propertiesSignal.value = properties
+    Object.assign(this.propertiesSignal, properties)
   }
 
   setDefaultProperties(properties: AllOptionalProperties) {

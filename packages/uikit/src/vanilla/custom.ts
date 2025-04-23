@@ -6,10 +6,11 @@ import { CustomContainerProperties, createCustomContainerState, setupCustomConta
 import { panelGeometry } from '../panel/index.js'
 import { MergedProperties } from '../properties/index.js'
 import { ThreeEventMap } from '../events.js'
+import { DeepSignal, deepSignal } from 'deepsignal'
 
 export class CustomContainer<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Component<T> {
   private readonly styleSignal: Signal<CustomContainerProperties<EM> | undefined> = signal(undefined)
-  private readonly propertiesSignal: Signal<CustomContainerProperties<EM> | undefined>
+  private readonly propertiesSignal: DeepSignal<CustomContainerProperties<EM>>
   private readonly defaultPropertiesSignal: Signal<AllOptionalProperties | undefined>
   private readonly parentContextSignal = createParentContextSignal()
   private readonly unsubscribe: () => void
@@ -22,7 +23,7 @@ export class CustomContainer<T = {}, EM extends ThreeEventMap = ThreeEventMap> e
     //TODO make the container the mesh
     this.matrixAutoUpdate = false
     setupParentContextSignal(this.parentContextSignal, this)
-    this.propertiesSignal = signal(properties)
+    this.propertiesSignal = deepSignal(properties ?? {})
     this.defaultPropertiesSignal = signal(defaultProperties)
 
     const mesh = new Mesh(panelGeometry, this.material)
@@ -75,7 +76,7 @@ export class CustomContainer<T = {}, EM extends ThreeEventMap = ThreeEventMap> e
   }
 
   setProperties(properties: CustomContainerProperties<EM> | undefined) {
-    this.propertiesSignal.value = properties
+    Object.assign(this.propertiesSignal, properties)
   }
 
   setDefaultProperties(properties: AllOptionalProperties) {

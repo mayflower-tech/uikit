@@ -10,6 +10,7 @@ import type {
   InheritableInputProperties,
   InheritableSvgProperties,
 } from '../components/index.js'
+import { DeepSignal } from 'deepsignal'
 
 export type AllOptionalProperties =
   | InheritableContainerProperties
@@ -29,20 +30,20 @@ export type WithReactive<T> = {
 
 export type Properties = Record<string, unknown>
 
-export type WithClasses<T> = T & { classes?: T | Array<T> }
+export type WithClasses<T extends object> = T & { classes?: T | Array<T> }
 
-export function traverseProperties<T>(
+export function traverseProperties<T extends object>(
   style: WithClasses<T> | undefined,
-  properties: WithClasses<T> | undefined,
+  properties: DeepSignal<WithClasses<T>>,
   defaultProperties: AllOptionalProperties | undefined,
-  fn: (properties: T) => void,
+  fn: (properties: T | DeepSignal<T>) => void,
 ): void {
   if (defaultProperties != null) {
     traverseClasses(defaultProperties.classes as any, fn)
     fn(defaultProperties as T)
   }
-  if (properties != null) {
-    traverseClasses(properties.classes as any, fn)
+  if (typeof properties === 'object') {
+    if ('classes' in properties) traverseClasses(properties.classes as any, fn)
     fn(properties)
   }
   if (style != null) {
@@ -51,7 +52,7 @@ export function traverseProperties<T>(
   }
 }
 
-function traverseClasses<T>(classes: WithClasses<T>['classes'], fn: (properties: T) => void) {
+function traverseClasses<T extends object>(classes: WithClasses<T>['classes'], fn: (properties: T) => void) {
   if (classes == null) {
     return
   }

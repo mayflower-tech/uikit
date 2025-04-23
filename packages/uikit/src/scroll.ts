@@ -260,7 +260,7 @@ function scroll(
 
 export function setupScroll(
   state: ScrollableComponentState,
-  listeners: DeepSignal<ScrollListeners | undefined>,
+  listeners: DeepSignal<ScrollListeners>,
   pixelSizeSignal: Signal<number>,
   object: Object3D,
   abortSignal: AbortSignal,

@@ -152,7 +152,7 @@ const eventHandlerKeys: Array<keyof EventHandlers> = [
 
 export function computedHandlers(
   style: Signal<Properties | undefined>,
-  propertiesSignal: DeepSignal<Properties | undefined>,
+  propertiesSignal: DeepSignal<Properties>,
   defaultProperties: Signal<AllOptionalProperties | undefined>,
   hoveredSignal: Signal<Array<number>>,
   activeSignal: Signal<Array<number>>,
@@ -215,7 +215,7 @@ export function addHandler<T extends { [Key in string]?: (e: any) => void }, K e
 
 export function computedMergedProperties(
   style: Signal<Properties | undefined>,
-  properties: DeepSignal<Properties | undefined>,
+  properties: DeepSignal<Properties>,
   defaultProperties: Signal<AllOptionalProperties | undefined>,
   postTransformers: PropertyTransformers,
   preTransformers?: PropertyTransformers,

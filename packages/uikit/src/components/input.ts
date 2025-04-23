@@ -123,7 +123,7 @@ export function createInputState<EM extends ThreeEventMap = ThreeEventMap>(
   parentCtx: ParentContext,
   fontFamilies: Signal<FontFamilies | undefined>,
   style: Signal<InputProperties<EM> | undefined>,
-  properties: DeepSignal<InputProperties<EM> | undefined>,
+  properties: DeepSignal<InputProperties<EM>>,
   defaultProperties: Signal<AllOptionalProperties | undefined>,
 ) {
   const flexState = createFlexNodeState()
@@ -144,7 +144,8 @@ export function createInputState<EM extends ThreeEventMap = ThreeEventMap>(
     },
     undefined,
     (m) => {
-      traverseProperties(style.value, properties.value, defaultProperties.value, (p) => {
+      // @ts-expect-error
+      traverseProperties(style.value, properties, defaultProperties.value, (p) => {
         m.add('caretOpacity', p.opacity)
         m.add('caretColor', p.color)
       })
@@ -179,12 +180,12 @@ export function createInputState<EM extends ThreeEventMap = ThreeEventMap>(
     backgroundOrderInfo,
   )
 
-  const defaultValue = style.peek()?.defaultValue ?? properties.peek()?.defaultValue
+  const defaultValue = style.peek()?.defaultValue ?? properties?.$defaultValue?.peek()
   const writeValue =
-    style.peek()?.value == null && properties.peek()?.value == null ? signal(defaultValue ?? '') : undefined
+    style.peek()?.value == null && properties.$value?.peek() == null ? signal(defaultValue ?? '') : undefined
 
   const valueSignal = computed(
-    () => writeValue?.value ?? readReactive(style.value?.value) ?? readReactive(properties.value?.value) ?? '',
+    () => writeValue?.value ?? readReactive(style.value?.value) ?? readReactive(properties.value) ?? '',
   )
 
   const type = computedNonInheritableProperty<InputType>(style, properties, 'type', 'text')
@@ -209,7 +210,7 @@ export function createInputState<EM extends ThreeEventMap = ThreeEventMap>(
 
   const selectionHandlers = computedSelectionHandlers(type, valueSignal, flexState, instancedTextRef, focus, disabled)
 
-  const multiline = style.peek()?.multiline ?? properties.peek()?.multiline ?? false
+  const multiline = style.peek()?.multiline ?? properties.$multiline?.peek() ?? false
 
   const element = createHtmlInputElement(
     selectionRange,
@@ -218,7 +219,7 @@ export function createInputState<EM extends ThreeEventMap = ThreeEventMap>(
         writeValue.value = newValue
       }
       style.peek()?.onValueChange?.(newValue)
-      properties.peek()?.onValueChange?.(newValue)
+      properties.$onValueChange?.peek()?.(newValue)
     },
     multiline,
   )
@@ -277,7 +278,7 @@ export function setupInput<EM extends ThreeEventMap = ThreeEventMap>(
   state: ReturnType<typeof createInputState>,
   parentCtx: ParentContext,
   style: Signal<InputProperties<EM> | undefined>,
-  properties: DeepSignal<InputProperties<EM> | undefined>,
+  properties: DeepSignal<InputProperties<EM>>,
   defaultProperties: Signal<AllOptionalProperties | undefined>,
   object: Object3D,
   abortSignal: AbortSignal,
@@ -377,7 +378,7 @@ export function setupInput<EM extends ThreeEventMap = ThreeEventMap>(
     state.element,
     state.hasFocusSignal,
     (hasFocus) => {
-      properties.peek()?.onFocusChange?.(hasFocus)
+      properties.$onFocusChange?.peek()?.(hasFocus)
       style.peek()?.onFocusChange?.(hasFocus)
     },
     abortSignal,

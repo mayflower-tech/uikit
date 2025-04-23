@@ -21,7 +21,7 @@ export function setupCursorCleanup(hoveredSignal: Signal<Array<number>>, abortSi
 export function addHoverHandlers(
   target: EventHandlers,
   style: WithHover<{}> | undefined,
-  properties: DeepSignal<WithHover<{}> | undefined>,
+  properties: DeepSignal<WithHover<{}>>,
   defaultProperties: AllOptionalProperties | undefined,
   hoveredSignal: Signal<Array<number>>,
   defaultCursor?: string,
