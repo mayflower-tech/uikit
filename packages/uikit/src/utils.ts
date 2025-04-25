@@ -3,6 +3,8 @@ import { Vector2Tuple, Color, Vector3Tuple, Vector3 } from 'three'
 import { Inset } from './flex/node.js'
 import { MergedProperties } from './properties/merged.js'
 import { computedInheritableProperty } from './properties/index.js'
+import { DeepSignal } from 'deepsignal/core'
+import { ReadonlyDeepSignalObject } from './components/utils.js'
 
 export const percentageRegex = /(-?\d+(?:\.\d+)?)%/
 
@@ -78,10 +80,9 @@ export function createConditionalPropertyTranslator(condition: () => boolean) {
   }
 }
 
-export function computedBorderInset(
-  propertiesSignal: Signal<MergedProperties>,
-  keys: ReadonlyArray<string>,
+export function computedBorderInset<PropK extends string>(
+  propertiesSignal: ReadonlyDeepSignalObject<Partial<Record<PropK, unknown>>>,
+  keys: ReadonlyArray<PropK>,
 ): Signal<Inset> {
-  const sizes = keys.map((key) => computedInheritableProperty(propertiesSignal, key, 0))
-  return computed(() => sizes.map((size) => size.value) as Inset)
+  return computed(() => keys.map((key) => propertiesSignal[key] ?? 0) as Inset)
 }

@@ -2,6 +2,7 @@ import { forwardRef, ReactNode, RefAttributes, useEffect, useMemo, useRef } from
 import { Object3D, Vector2Tuple } from 'three'
 import { useParent } from './context.js'
 import { AddHandlers, R3FEventMap, usePropertySignals } from './utils.js'
+
 import {
   FontFamilies,
   InputProperties as BaseInputProperties,

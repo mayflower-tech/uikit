@@ -3,9 +3,9 @@ import { Signal, batch, effect, signal, untracked } from '@preact/signals-core'
 import { Display, Edge, FlexDirection, MeasureFunction, Node, Overflow } from 'yoga-layout/load'
 import { setter } from './setter.js'
 import { setupImmediateProperties } from '../properties/immediate.js'
-import { MergedProperties } from '../properties/merged.js'
 import { PointScaleFactor, createYogaNode } from './yoga.js'
 import { abortableEffect } from '../utils.js'
+import { ReadonlyDeepSignalObject } from '../internals.js'
 
 export type YogaProperties = {
   [Key in keyof typeof setter]?: Parameters<(typeof setter)[Key]>[1]
@@ -54,7 +54,7 @@ export class FlexNode {
 
   constructor(
     private state: FlexNodeState & { root: { requestCalculateLayout(): void } },
-    private readonly propertiesSignal: Signal<MergedProperties>,
+    private readonly propertiesSignal: ReadonlyDeepSignalObject<YogaProperties>,
     private object: Object3D,
     private objectVisibileDefault: boolean,
     abortSignal: AbortSignal,
@@ -81,6 +81,7 @@ export class FlexNode {
         this.state.root.requestCalculateLayout()
       },
       abortSignal,
+      Object.keys(setter),
     )
   }
 
@@ -131,11 +132,10 @@ export class FlexNode {
     /** ---- START : adaptation of yoga's behavior to align more to the web behavior ---- */
     const parentDirectionVertical =
       parentDirection === FlexDirection.Column || parentDirection === FlexDirection.ColumnReverse
-    const properties = this.propertiesSignal.peek()
     if (
       this.customLayouting != null &&
-      untracked(() =>
-        properties.read<YogaProperties['minWidth']>(parentDirectionVertical ? 'minHeight' : 'minWidth', undefined),
+      untracked(
+        () => (parentDirectionVertical ? this.propertiesSignal.minHeight : this.propertiesSignal.minWidth, undefined),
       ) === undefined
     ) {
       this.yogaNode[parentDirectionVertical ? 'setMinHeight' : 'setMinWidth'](
@@ -145,8 +145,8 @@ export class FlexNode {
 
     //see: https://codepen.io/Gettinqdown-Dev/pen/wvZLKBm
     //-> on the web if the parent has flexdireciton column, elements dont shrink below flexBasis
-    if (untracked(() => properties.read<YogaProperties['flexShrink']>('flexShrink', undefined)) == null) {
-      const hasHeight = untracked(() => properties.read<YogaProperties['height']>('height', undefined)) != null
+    if (untracked(() => this.propertiesSignal.flexShrink) == null) {
+      const hasHeight = untracked(() => this.propertiesSignal.height) != null
       this.yogaNode.setFlexShrink(hasHeight && parentDirectionVertical ? 0 : undefined)
     }
     /** ---- END ---- */

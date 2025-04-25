@@ -1,14 +1,14 @@
 import { YogaProperties, createFlexNodeState } from '../flex/node.js'
-import { createHoverPropertyTransformers, setupCursorCleanup } from '../hover.js'
+import { createHoveredStuff, createHoverPropertyTransformers, setupCursorCleanup } from '../hover.js'
 import { computedIsClipped, createGlobalClippingPlanes } from '../clipping.js'
 import { ScrollbarProperties } from '../scroll.js'
 import { WithAllAliases } from '../properties/alias.js'
 import { PanelProperties } from '../panel/instanced-panel.js'
 import { TransformProperties, setupObjectTransform, computedTransformMatrix } from '../transform.js'
 import { AllOptionalProperties, WithClasses, WithReactive } from '../properties/default.js'
-import { createResponsivePropertyTransformers } from '../responsive.js'
+import { createResponsivePropertyStuff, createResponsivePropertyTransformers } from '../responsive.js'
 import { ElementType, ZIndexProperties, computedOrderInfo, setupRenderOrder } from '../order.js'
-import { createActivePropertyTransfomers } from '../active.js'
+import { createActivePropertyTransfomers, createActiveStuff } from '../active.js'
 import { Signal, signal } from '@preact/signals-core'
 import {
   VisibilityProperties,
@@ -21,11 +21,12 @@ import {
   setupMatrixWorldUpdate,
   setupPointerEvents,
   computedAncestorsHaveListeners,
+  mergeProps,
 } from './utils.js'
 import { Listeners, setupLayoutListeners, setupClippedListeners } from '../listeners.js'
 import { ParentContext } from '../context.js'
 import { FrontSide, Material, Mesh, Object3D } from 'three'
-import { darkPropertyTransformers } from '../dark.js'
+import { darkPropertyTransformers, darkStuff } from '../dark.js'
 import { PointerEventsProperties, RenderProperties, ShadowProperties, makeClippedCast } from '../panel/index.js'
 import { EventHandlers, ThreeEventMap } from '../events.js'
 import { abortableEffect } from '../utils.js'
@@ -57,19 +58,25 @@ export function createCustomContainerState<EM extends ThreeEventMap = ThreeEvent
   parentCtx: ParentContext,
   style: Signal<CustomContainerProperties<EM> | undefined>,
   properties: DeepSignal<CustomContainerProperties<EM>>,
-  defaultProperties: Signal<AllOptionalProperties | undefined>,
+  defaultProperties: DeepSignal<AllOptionalProperties>,
 ) {
   const flexState = createFlexNodeState()
   const hoveredSignal = signal<Array<number>>([])
   const activeSignal = signal<Array<number>>([])
 
   //properties
-  const mergedProperties = computedMergedProperties(style, properties, defaultProperties, {
-    ...darkPropertyTransformers,
-    ...createResponsivePropertyTransformers(parentCtx.root.size),
-    ...createHoverPropertyTransformers(hoveredSignal),
-    ...createActivePropertyTransfomers(activeSignal),
-  })
+  // const mergedProperties = computedMergedProperties(style, properties, defaultProperties, {
+  //   ...darkPropertyTransformers,
+  //   ...createResponsivePropertyTransformers(parentCtx.root.size),
+  //   ...createHoverPropertyTransformers(hoveredSignal),
+  //   ...createActivePropertyTransfomers(activeSignal),
+  // })
+  const mergedProperties = mergeProps<CustomContainerProperties<EM>>(properties, defaultProperties, [
+    [0, darkStuff],
+    [10, createResponsivePropertyStuff(parentCtx.root.size)],
+    [20, createHoveredStuff(hoveredSignal)],
+    [30, createActiveStuff(activeSignal)],
+  ])
 
   const transformMatrix = computedTransformMatrix(mergedProperties, flexState, parentCtx.root.pixelSize)
   const globalMatrix = computedGlobalMatrix(parentCtx.childrenMatrix, transformMatrix)

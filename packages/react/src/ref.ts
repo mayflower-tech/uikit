@@ -13,6 +13,7 @@ import {
   createInputState,
   createContentState,
   RootContext,
+  ReadonlyDeepSignalObject,
 } from '@pmndrs/uikit/internals'
 import { ForwardedRef, RefObject, useImperativeHandle } from 'react'
 import { Vector2Tuple, Mesh, Matrix4 } from 'three'
@@ -84,7 +85,7 @@ export type ComponentInternals<T = ContainerProperties> = {
   getComputedProperty<K extends keyof T>(key: K): T[K] | undefined
 }
 
-export function useComponentInternals<T, O = {}>(
+export function useComponentInternals<T extends object, O = {}>(
   ref: ForwardedRef<ComponentInternals<T> & O>,
   root: RootContext,
   styleSignal: Signal<T | undefined>,
@@ -101,7 +102,7 @@ export function useComponentInternals<T, O = {}>(
   > & {
     isClipped?: Signal<boolean>
     scrollPosition?: Signal<Vector2Tuple>
-    mergedProperties: Signal<MergedProperties>
+    mergedProperties: ReadonlyDeepSignalObject<T>
   },
   interactionPanel: Mesh | RefObject<Mesh | null>,
   additional?: O,
@@ -111,11 +112,10 @@ export function useComponentInternals<T, O = {}>(
       internals
     return {
       isVisible: internals.isVisible,
-      setStyle: (style: T | undefined, replace?: boolean) =>
-        (styleSignal.value = replace ? style : ({ ...styleSignal.value, ...style } as T)),
+      setStyle: (style, replace) => (styleSignal.value = replace ? style : ({ ...styleSignal.value, ...style } as T)),
       getStyle: () => styleSignal.peek(),
-      getComputedProperty: <K extends keyof T>(key: K) =>
-        untracked(() => internals.mergedProperties.value.read<T[K] | undefined>(key as string, undefined)),
+      // @ts-expect-error
+      getComputedProperty: (key) => internals.mergedProperties['$' + key]!.peek(),
       pixelSize: root.pixelSize,
       root,
       borderInset,

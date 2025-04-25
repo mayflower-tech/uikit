@@ -10,7 +10,7 @@ export class Input<T = {}, Em extends ThreeEventMap = ThreeEventMap> extends Com
   private mergedProperties?: ReadonlySignal<MergedProperties>
   private readonly styleSignal: Signal<InputProperties<Em> | undefined> = signal(undefined)
   private readonly propertiesSignal: DeepSignal<InputProperties<Em>>
-  private readonly defaultPropertiesSignal: Signal<AllOptionalProperties | undefined>
+  private readonly defaultPropertiesSignal: DeepSignal<AllOptionalProperties>
   private readonly parentContextSignal = createParentContextSignal()
   private readonly unsubscribe: () => void
 
@@ -21,7 +21,7 @@ export class Input<T = {}, Em extends ThreeEventMap = ThreeEventMap> extends Com
     this.matrixAutoUpdate = false
     setupParentContextSignal(this.parentContextSignal, this)
     this.propertiesSignal = deepSignal(properties ?? {})
-    this.defaultPropertiesSignal = signal(defaultProperties)
+    this.defaultPropertiesSignal = deepSignal(defaultProperties ?? {})
 
     this.unsubscribe = effect(() => {
       const parentContext = this.parentContextSignal.value?.value
@@ -75,7 +75,7 @@ export class Input<T = {}, Em extends ThreeEventMap = ThreeEventMap> extends Com
   }
 
   setDefaultProperties(properties: AllOptionalProperties) {
-    this.defaultPropertiesSignal.value = properties
+    Object.assign(this.defaultPropertiesSignal, properties)
   }
 
   destroy() {

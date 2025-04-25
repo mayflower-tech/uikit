@@ -22,19 +22,20 @@ import {
   setupMatrixWorldUpdate,
   setupPointerEvents,
   computedAncestorsHaveListeners,
+  mergeProps,
 } from './utils.js'
 import { abortableEffect, fitNormalizedContentInside } from '../utils.js'
 import { makeClippedCast, PointerEventsProperties } from '../panel/interaction-panel-mesh.js'
 import { computedIsClipped, createGlobalClippingPlanes } from '../clipping.js'
 import { setupLayoutListeners, setupClippedListeners } from '../listeners.js'
-import { createActivePropertyTransfomers } from '../active.js'
-import { createHoverPropertyTransformers, setupCursorCleanup } from '../hover.js'
+import { createActivePropertyTransfomers, createActiveStuff } from '../active.js'
+import { createHoveredStuff, createHoverPropertyTransformers, setupCursorCleanup } from '../hover.js'
 import { createInteractionPanel, setupInteractionPanel } from '../panel/instanced-panel-mesh.js'
-import { createResponsivePropertyTransformers } from '../responsive.js'
+import { createResponsivePropertyStuff, createResponsivePropertyTransformers } from '../responsive.js'
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js'
 import { AppearanceProperties } from './svg.js'
 import { PanelGroupProperties, computedPanelGroupDependencies, getDefaultPanelMaterialConfig } from '../panel/index.js'
-import { darkPropertyTransformers } from '../dark.js'
+import { darkPropertyTransformers, darkStuff } from '../dark.js'
 import { MergedProperties } from '../properties/index.js'
 import { ThreeEventMap } from '../events.js'
 import { DeepSignal } from 'deepsignal/core'
@@ -68,29 +69,36 @@ export function createIconState<EM extends ThreeEventMap = ThreeEventMap>(
   svgHeight: number,
   style: Signal<IconProperties<EM> | undefined>,
   properties: DeepSignal<IconProperties<EM>>,
-  defaultProperties: Signal<AllOptionalProperties | undefined>,
+  defaultProperties: DeepSignal<AllOptionalProperties>,
 ) {
   const flexState = createFlexNodeState()
   const hoveredSignal = signal<Array<number>>([])
   const activeSignal = signal<Array<number>>([])
 
-  const mergedProperties = computedMergedProperties(
-    style,
-    properties,
-    defaultProperties,
-    {
-      ...darkPropertyTransformers,
-      ...createResponsivePropertyTransformers(parentCtx.root.size),
-      ...createHoverPropertyTransformers(hoveredSignal),
-      ...createActivePropertyTransfomers(activeSignal),
-    },
-    keepAspectRatioPropertyTransformer,
-    (m) => {
-      m.add('aspectRatio', svgWidth / svgHeight)
-      m.add('width', svgWidth)
-      m.add('height', svgHeight)
-    },
-  )
+  // const mergedProperties = computedMergedProperties(
+  //   style,
+  //   properties,
+  //   defaultProperties,
+  //   {
+  //     ...darkPropertyTransformers,
+  //     ...createResponsivePropertyTransformers(parentCtx.root.size),
+  //     ...createHoverPropertyTransformers(hoveredSignal),
+  //     ...createActivePropertyTransfomers(activeSignal),
+  //   },
+  //   keepAspectRatioPropertyTransformer,
+  //   (m) => {
+  //     m.add('aspectRatio', svgWidth / svgHeight)
+  //     m.add('width', svgWidth)
+  //     m.add('height', svgHeight)
+  //   },
+  // )
+
+  const mergedProperties = mergeProps<IconProperties<EM>>(properties, defaultProperties, [
+    [0, darkStuff],
+    [10, createResponsivePropertyStuff(parentCtx.root.size)],
+    [20, createHoveredStuff(hoveredSignal)],
+    [30, createActiveStuff(activeSignal)],
+  ])
 
   const transformMatrix = computedTransformMatrix(mergedProperties, flexState, parentCtx.root.pixelSize)
   const globalMatrix = computedGlobalMatrix(parentCtx.childrenMatrix, transformMatrix)

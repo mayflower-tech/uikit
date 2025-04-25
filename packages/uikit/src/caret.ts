@@ -11,6 +11,7 @@ import {
   createPanelMaterialConfig,
 } from './panel/index.js'
 import { MergedProperties, computedInheritableProperty } from './properties/index.js'
+import { ReadonlyDeepSignalObject } from './internals.js'
 
 export type CaretTransformation = {
   position: Vector2Tuple
@@ -43,10 +44,21 @@ export type CaretProperties = {
     [Key in Exclude<
       keyof PanelProperties,
       'backgroundColor' | 'backgroundOpacity'
-    > as `caret${Capitalize<Key>}`]: PanelProperties[Key]
+    > as `caret${Capitalize<Key>}`]?: PanelProperties[Key]
   }
 
-let caretMaterialConfig: PanelMaterialConfig | undefined
+type CaretMaterialPropKeys =
+  | 'caretColor'
+  | 'caretOpacity'
+  | 'caretBorderBend'
+  | 'caretBorderBottomLeftRadius'
+  | 'caretBorderBottomRightRadius'
+  | 'caretBorderColor'
+  | 'caretBorderOpacity'
+  | 'caretBorderTopLeftRadius'
+  | 'caretBorderTopRightRadius'
+
+let caretMaterialConfig: PanelMaterialConfig<CaretMaterialPropKeys> | undefined
 function getCaretMaterialConfig() {
   caretMaterialConfig ??= createPanelMaterialConfig(
     {
@@ -69,7 +81,7 @@ function getCaretMaterialConfig() {
 }
 
 export function createCaret(
-  propertiesSignal: Signal<MergedProperties>,
+  propertiesSignal: ReadonlyDeepSignalObject<CaretProperties>,
   matrix: Signal<Matrix4 | undefined>,
   caretTransformation: Signal<CaretTransformation | undefined>,
   isVisible: Signal<boolean>,
@@ -94,7 +106,7 @@ export function createCaret(
     return () => clearInterval(ref)
   }, abortSignal)
   const borderInset = computedBorderInset(propertiesSignal, caretBorderKeys)
-  const caretWidth = computedInheritableProperty(propertiesSignal, 'caretWidth', 1.5)
+  const caretWidth = computedInheritableProperty<'caretWidth', number>(propertiesSignal, 'caretWidth', 1.5)
 
   setupInstancedPanel(
     propertiesSignal,

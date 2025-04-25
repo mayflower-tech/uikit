@@ -11,6 +11,7 @@ import {
   createPanelMaterialConfig,
 } from './panel/index.js'
 import { MergedProperties } from './properties/index.js'
+import { ReadonlyDeepSignalObject } from './internals.js'
 
 export type SelectionTransformation = { size: Vector2Tuple; position: Vector2Tuple }
 
@@ -35,7 +36,7 @@ export type SelectionProperties = {
     [Key in Exclude<
       keyof PanelProperties,
       'backgroundColor' | 'backgroundOpacity'
-    > as `selection${Capitalize<Key>}`]: PanelProperties[Key]
+    > as `selection${Capitalize<Key>}`]?: PanelProperties[Key]
   }
 
 let selectionMaterialConfig: PanelMaterialConfig | undefined
@@ -61,7 +62,7 @@ function getSelectionMaterialConfig() {
 }
 
 export function createSelection(
-  propertiesSignal: Signal<MergedProperties>,
+  propertiesSignal: ReadonlyDeepSignalObject<SelectionProperties>,
   matrix: Signal<Matrix4 | undefined>,
   selectionTransformations: Signal<Array<SelectionTransformation>>,
   isVisible: Signal<boolean>,

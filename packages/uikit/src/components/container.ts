@@ -17,8 +17,8 @@ import { TransformProperties, setupObjectTransform, computedTransformMatrix } fr
 import { AllOptionalProperties, WithClasses, WithReactive } from '../properties/default.js'
 import { createResponsivePropertyTransformers } from '../responsive.js'
 import { ElementType, ZIndexProperties, computedOrderInfo } from '../order.js'
-import { createActivePropertyTransfomers } from '../active.js'
-import { Signal, signal } from '@preact/signals-core'
+import { createActivePropertyTransfomers, createActiveStuff } from '../active.js'
+import { computed, Signal, signal } from '@preact/signals-core'
 import {
   VisibilityProperties,
   WithConditionals,
@@ -33,7 +33,7 @@ import { Listeners, setupLayoutListeners, setupClippedListeners } from '../liste
 import { ParentContext } from '../context.js'
 import { PanelGroupProperties, computedPanelGroupDependencies } from '../panel/instanced-panel-group.js'
 import { createInteractionPanel, setupInteractionPanel } from '../panel/instanced-panel-mesh.js'
-import { darkPropertyTransformers } from '../dark.js'
+import { darkPropertyTransformers, darkStuff } from '../dark.js'
 import { getDefaultPanelMaterialConfig, PointerEventsProperties } from '../panel/index.js'
 import {
   computedAncestorsHaveListeners,
@@ -44,6 +44,7 @@ import {
   EventHandlers,
   ThreeEventMap,
   Properties,
+  mergeProps,
 } from '../internals.js'
 import { Object3D } from 'three'
 import { DeepSignal } from 'deepsignal/core'
@@ -51,17 +52,17 @@ import { DeepSignal } from 'deepsignal/core'
 export type InheritableContainerProperties = WithClasses<
   WithConditionals<
     WithAllAliases<
-      WithReactive<
-        YogaProperties &
-          PanelProperties &
-          ZIndexProperties &
-          TransformProperties &
-          ScrollbarProperties &
-          PanelGroupProperties &
-          VisibilityProperties &
-          UpdateMatrixWorldProperties &
-          PointerEventsProperties
-      >
+      // WithReactive<
+      YogaProperties &
+        PanelProperties &
+        ZIndexProperties &
+        TransformProperties &
+        ScrollbarProperties &
+        PanelGroupProperties &
+        VisibilityProperties &
+        UpdateMatrixWorldProperties &
+        PointerEventsProperties
+      // >
     >
   >
 >
@@ -75,19 +76,26 @@ export function createContainerState<EM extends ThreeEventMap = ThreeEventMap>(
   objectRef: { current?: Object3D | null },
   style: Signal<ContainerProperties<EM> | undefined>,
   properties: DeepSignal<ContainerProperties<EM>>,
-  defaultProperties: Signal<AllOptionalProperties | undefined>,
+  defaultProperties: DeepSignal<AllOptionalProperties>,
 ) {
   const flexState = createFlexNodeState()
   const hoveredList = signal<Array<number>>([])
   const pressedList = signal<Array<number>>([])
-
   //properties
-  const mergedProperties = computedMergedProperties(style, properties, defaultProperties, {
-    ...darkPropertyTransformers,
-    ...createResponsivePropertyTransformers(parentCtx.root.size),
-    ...createHoverPropertyTransformers(hoveredList),
-    ...createActivePropertyTransfomers(pressedList),
-  })
+  // have to pass the type explicitly to avoid TS error
+  const mergedProperties = mergeProps<ContainerProperties<EM>>(properties, defaultProperties, [
+    [0, darkStuff],
+    [10, darkStuff],
+    [20, darkStuff],
+    [30, createActiveStuff(pressedList)],
+  ])
+  // const mergedProperties = computedMergedProperties(style, properties, defaultProperties, {
+  //   ...darkPropertyTransformers,
+  //   ...createResponsivePropertyTransformers(parentCtx.root.size),
+  //   ...createHoverPropertyTransformers(hoveredList),
+  //   ...createActivePropertyTransfomers(pressedList),
+  // })
+  //
 
   //transform
   const transformMatrix = computedTransformMatrix(mergedProperties, flexState, parentCtx.root.pixelSize)
@@ -101,7 +109,7 @@ export function createContainerState<EM extends ThreeEventMap = ThreeEventMap>(
   //instanced panel
   const groupDeps = computedPanelGroupDependencies(mergedProperties)
   const scrollPosition = createScrollPosition()
-  const scrollbarWidth = computedInheritableProperty(mergedProperties, 'scrollbarWidth', 10)
+  const scrollbarWidth = computed(() => mergedProperties.scrollbarWidth ?? 10)
 
   const orderInfo = computedOrderInfo(
     mergedProperties,
@@ -201,7 +209,7 @@ export function setupContainer<EM extends ThreeEventMap = ThreeEventMap>(
     abortSignal,
   )
 
-  const updateMatrixWorld = computedInheritableProperty(state.mergedProperties, 'updateMatrixWorld', false)
+  const updateMatrixWorld = computed(() => state.mergedProperties.$updateMatrixWorld!.value ?? false)
   setupMatrixWorldUpdate(updateMatrixWorld, false, object, state.root, state.globalMatrix, false, abortSignal)
   setupMatrixWorldUpdate(
     updateMatrixWorld,

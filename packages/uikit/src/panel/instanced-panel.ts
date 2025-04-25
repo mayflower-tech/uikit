@@ -9,6 +9,7 @@ import { MergedProperties } from '../properties/merged.js'
 import { setupImmediateProperties } from '../properties/immediate.js'
 import { OrderInfo } from '../order.js'
 import { PanelMaterialConfig } from './panel-material.js'
+import { DeepSignal } from 'deepsignal/core'
 
 export type PanelProperties = {
   borderTopLeftRadius?: number
@@ -22,8 +23,8 @@ export type PanelProperties = {
   borderOpacity?: number
 }
 
-export function setupInstancedPanel(
-  propertiesSignal: Signal<MergedProperties>,
+export function setupInstancedPanel<MaterPropK extends string>(
+  propertiesSignal: DeepSignal<PanelProperties & Partial<Record<MaterPropK, unknown>>>,
   orderInfo: Signal<OrderInfo | undefined>,
   panelGroupDependencies: Signal<Required<PanelGroupProperties>>,
   panelGroupManager: PanelGroupManager,
@@ -33,7 +34,7 @@ export function setupInstancedPanel(
   borderInset: Signal<Inset | undefined>,
   clippingRect: Signal<ClippingRect | undefined> | undefined,
   isVisible: Signal<boolean>,
-  materialConfig: PanelMaterialConfig,
+  materialConfig: PanelMaterialConfig<MaterPropK>,
   abortSignal: AbortSignal,
 ) {
   abortableEffect(() => {
@@ -62,7 +63,7 @@ export function setupInstancedPanel(
 const matrixHelper1 = new Matrix4()
 const matrixHelper2 = new Matrix4()
 
-export class InstancedPanel {
+export class InstancedPanel<PropK extends string = string> {
   private indexInBucket?: number
   private bucket?: Bucket<unknown>
 
@@ -72,7 +73,7 @@ export class InstancedPanel {
   private abortController?: AbortController
 
   constructor(
-    propertiesSignal: Signal<MergedProperties>,
+    propertiesSignal: DeepSignal<Record<PropK, unknown>>,
     private group: InstancedPanelGroup,
     private readonly minorIndex: number,
     private readonly matrix: Signal<Matrix4 | undefined>,
@@ -81,7 +82,7 @@ export class InstancedPanel {
     private readonly borderInset: Signal<Inset | undefined>,
     private readonly clippingRect: Signal<ClippingRect | undefined> | undefined,
     isVisible: Signal<boolean>,
-    public readonly materialConfig: PanelMaterialConfig,
+    public readonly materialConfig: PanelMaterialConfig<PropK>,
     abortSignal: AbortSignal,
   ) {
     const setters = materialConfig.setters
@@ -99,6 +100,7 @@ export class InstancedPanel {
         root.requestRender()
       },
       abortSignal,
+      Object.keys(setters) as PropK[],
     )
     const isPanelVisible = materialConfig.computedIsVisibile(propertiesSignal, borderInset, size, isVisible)
     abortableEffect(() => {

@@ -17,6 +17,7 @@ import { ParentContext, RootContext } from './context.js'
 import { ScrollListeners } from './listeners.js'
 import { EventHandlers, ThreeMouseEvent, ThreePointerEvent } from './events.js'
 import { DeepSignal } from 'deepsignal/core'
+import { ReadonlyDeepSignalObject } from './components/utils.js'
 
 const distanceHelper = new Vector3()
 const localPointHelper = new Vector3()
@@ -392,7 +393,7 @@ export type ScrollbarProperties = {
     [Key in Exclude<
       keyof PanelProperties,
       'backgroundColor' | 'backgroundOpacity'
-    > as `scrollbar${Capitalize<Key>}`]: PanelProperties[Key]
+    > as `scrollbar${Capitalize<Key>}`]?: PanelProperties[Key]
   }
 
 const scrollbarBorderPropertyKeys = [
@@ -403,7 +404,11 @@ const scrollbarBorderPropertyKeys = [
 ] as const
 
 export function setupScrollbars(
-  propertiesSignal: Signal<MergedProperties>,
+  propertiesSignal: ReadonlyDeepSignalObject<
+    ScrollbarProperties &
+      Partial<Record<(typeof scrollbarBorderPropertyKeys)[number], unknown>> &
+      Partial<Record<ScrollbarPanelMaterialPropKeys, unknown>>
+  >,
   scrollPosition: Signal<Vector2Tuple>,
   flexState: FlexNodeState,
   globalMatrix: Signal<Matrix4 | undefined>,
@@ -456,7 +461,18 @@ export function setupScrollbars(
   )
 }
 
-let scrollbarMaterialConfig: PanelMaterialConfig | undefined
+type ScrollbarPanelMaterialPropKeys =
+  | 'scrollbarColor'
+  | 'scrollbarBorderBottomLeftRadius'
+  | 'scrollbarBorderBottomRightRadius'
+  | 'scrollbarBorderTopRightRadius'
+  | 'scrollbarBorderTopLeftRadius'
+  | 'scrollbarBorderColor'
+  | 'scrollbarBorderBend'
+  | 'scrollbarBorderOpacity'
+  | 'scrollbarOpacity'
+
+let scrollbarMaterialConfig: PanelMaterialConfig<ScrollbarPanelMaterialPropKeys> | undefined
 function getScrollbarMaterialConfig() {
   scrollbarMaterialConfig ??= createPanelMaterialConfig(
     {
@@ -479,7 +495,9 @@ function getScrollbarMaterialConfig() {
 }
 
 function setupScrollbar(
-  propertiesSignal: Signal<MergedProperties>,
+  propertiesSignal: ReadonlyDeepSignalObject<
+    ScrollbarProperties & Partial<Record<ScrollbarPanelMaterialPropKeys, unknown>>
+  >,
   primaryIndex: number,
   scrollPosition: Signal<Vector2Tuple>,
   flexState: FlexNodeState,

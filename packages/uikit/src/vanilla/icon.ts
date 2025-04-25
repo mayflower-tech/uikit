@@ -9,7 +9,7 @@ import { deepSignal, DeepSignal } from 'deepsignal/core'
 export class Icon<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Component<T> {
   private readonly styleSignal: Signal<IconProperties<EM> | undefined> = signal(undefined)
   private readonly propertiesSignal: DeepSignal<IconProperties<EM>>
-  private readonly defaultPropertiesSignal: Signal<AllOptionalProperties | undefined>
+  private readonly defaultPropertiesSignal: DeepSignal<AllOptionalProperties>
   private readonly parentContextSignal = createParentContextSignal()
   private readonly unsubscribe: () => void
 
@@ -26,7 +26,7 @@ export class Icon<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Comp
     this.matrixAutoUpdate = false
     setupParentContextSignal(this.parentContextSignal, this)
     this.propertiesSignal = deepSignal(properties ?? {})
-    this.defaultPropertiesSignal = signal(defaultProperties)
+    this.defaultPropertiesSignal = deepSignal(defaultProperties ?? {})
     this.unsubscribe = effect(() => {
       const parentContext = this.parentContextSignal.value?.value
       if (parentContext == null) {
@@ -57,7 +57,8 @@ export class Icon<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Comp
   }
 
   getComputedProperty<K extends keyof IconProperties<EM>>(key: K): IconProperties<EM>[K] | undefined {
-    return untracked(() => this.internals.mergedProperties?.value.read(key as string, undefined))
+    // @ts-expect-error
+    return untracked(() => this.internals.mergedPropeties[key])
   }
 
   getStyle(): undefined | Readonly<IconProperties<EM>> {
@@ -73,7 +74,7 @@ export class Icon<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Comp
   }
 
   setDefaultProperties(properties: AllOptionalProperties) {
-    this.defaultPropertiesSignal.value = properties
+    Object.assign(this.defaultPropertiesSignal, properties)
   }
 
   destroy() {

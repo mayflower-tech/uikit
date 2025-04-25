@@ -1,5 +1,5 @@
 import { FlexNodeState, YogaProperties, createFlexNodeState } from '../flex/index.js'
-import { createHoverPropertyTransformers, setupCursorCleanup } from '../hover.js'
+import { createHoveredStuff, createHoverPropertyTransformers, setupCursorCleanup } from '../hover.js'
 import { computedIsClipped } from '../clipping.js'
 import { DeepSignal } from 'deepsignal/core'
 import { ScrollbarProperties } from '../scroll.js'
@@ -14,9 +14,9 @@ import {
   computedNonInheritableProperty,
   traverseProperties,
 } from '../properties/index.js'
-import { createResponsivePropertyTransformers } from '../responsive.js'
+import { createResponsivePropertyStuff, createResponsivePropertyTransformers } from '../responsive.js'
 import { computedOrderInfo, ElementType, ZIndexProperties } from '../order.js'
-import { createActivePropertyTransfomers } from '../active.js'
+import { createActivePropertyTransfomers, createActiveStuff } from '../active.js'
 import { ReadonlySignal, Signal, computed, effect, signal } from '@preact/signals-core'
 import {
   UpdateMatrixWorldProperties,
@@ -30,6 +30,8 @@ import {
   setupMatrixWorldUpdate,
   setupPointerEvents,
   computedAncestorsHaveListeners,
+  mergeProps,
+  ReadonlyDeepSignalObject,
 } from './utils.js'
 import { abortableEffect, readReactive } from '../utils.js'
 import { Listeners, setupLayoutListeners, setupClippedListeners } from '../listeners.js'
@@ -49,7 +51,7 @@ import {
   computedGylphGroupDependencies,
   createInstancedText,
 } from '../text/index.js'
-import { darkPropertyTransformers } from '../dark.js'
+import { darkPropertyTransformers, darkStuff } from '../dark.js'
 import { getDefaultPanelMaterialConfig, PointerEventsProperties } from '../panel/index.js'
 
 export type InheritableInputProperties = WithClasses<
@@ -124,33 +126,39 @@ export function createInputState<EM extends ThreeEventMap = ThreeEventMap>(
   fontFamilies: Signal<FontFamilies | undefined>,
   style: Signal<InputProperties<EM> | undefined>,
   properties: DeepSignal<InputProperties<EM>>,
-  defaultProperties: Signal<AllOptionalProperties | undefined>,
+  defaultProperties: DeepSignal<AllOptionalProperties>,
 ) {
   const flexState = createFlexNodeState()
   const hoveredSignal = signal<Array<number>>([])
   const activeSignal = signal<Array<number>>([])
   const hasFocusSignal = signal<boolean>(false)
 
-  const mergedProperties = computedMergedProperties(
-    style,
-    properties,
-    defaultProperties,
-    {
-      ...darkPropertyTransformers,
-      ...createResponsivePropertyTransformers(parentCtx.root.size),
-      ...createHoverPropertyTransformers(hoveredSignal),
-      ...createActivePropertyTransfomers(activeSignal),
-      ...createFocusPropertyTransformers(hasFocusSignal),
-    },
-    undefined,
-    (m) => {
-      // @ts-expect-error
-      traverseProperties(style.value, properties, defaultProperties.value, (p) => {
-        m.add('caretOpacity', p.opacity)
-        m.add('caretColor', p.color)
-      })
-    },
-  )
+  // const mergedProperties = computedMergedProperties(
+  //   style,
+  //   properties,
+  //   defaultProperties,
+  //   {
+  //     ...darkPropertyTransformers,
+  //     ...createResponsivePropertyTransformers(parentCtx.root.size),
+  //     ...createHoverPropertyTransformers(hoveredSignal),
+  //     ...createActivePropertyTransfomers(activeSignal),
+  //     ...createFocusPropertyTransformers(hasFocusSignal),
+  //   },
+  //   undefined,
+  //   (m) => {
+  //     // @ts-expect-error
+  //     traverseProperties(style.value, properties, defaultProperties.value, (p) => {
+  //       m.add('caretOpacity', p.opacity)
+  //       m.add('caretColor', p.color)
+  //     })
+  //   },
+  // )
+  const mergedProperties = mergeProps<InputProperties<EM>>(properties, defaultProperties, [
+    [0, darkStuff],
+    [10, createResponsivePropertyStuff(parentCtx.root.size)],
+    [20, createHoveredStuff(hoveredSignal)],
+    [30, createActiveStuff(activeSignal)],
+  ])
 
   const transformMatrix = computedTransformMatrix(mergedProperties, flexState, parentCtx.root.pixelSize)
   const globalMatrix = computedGlobalMatrix(parentCtx.childrenMatrix, transformMatrix)
@@ -194,7 +202,11 @@ export function createInputState<EM extends ThreeEventMap = ThreeEventMap>(
   )
 
   const disabled = computedNonInheritableProperty(style, properties, 'disabled', false)
-  const updateMatrixWorld = computedInheritableProperty(mergedProperties, 'updateMatrixWorld', false)
+  const updateMatrixWorld = computedInheritableProperty<boolean, 'updateMatrixWorld'>(
+    mergedProperties,
+    'updateMatrixWorld',
+    false,
+  )
 
   const instancedTextRef: { current?: InstancedText } = {}
 
@@ -278,8 +290,8 @@ export function setupInput<EM extends ThreeEventMap = ThreeEventMap>(
   state: ReturnType<typeof createInputState>,
   parentCtx: ParentContext,
   style: Signal<InputProperties<EM> | undefined>,
-  properties: DeepSignal<InputProperties<EM>>,
-  defaultProperties: Signal<AllOptionalProperties | undefined>,
+  properties: ReadonlyDeepSignalObject<InputProperties<EM>>,
+  defaultProperties: DeepSignal<AllOptionalProperties>,
   object: Object3D,
   abortSignal: AbortSignal,
 ) {

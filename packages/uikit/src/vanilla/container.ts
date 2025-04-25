@@ -8,7 +8,7 @@ import { DeepSignal, deepSignal } from 'deepsignal/core'
 export class Container<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Parent<T> {
   private readonly styleSignal: Signal<ContainerProperties<EM> | undefined> = signal(undefined)
   private readonly propertiesSignal: DeepSignal<ContainerProperties<EM>>
-  private readonly defaultPropertiesSignal: Signal<AllOptionalProperties | undefined>
+  private readonly defaultPropertiesSignal: DeepSignal<AllOptionalProperties>
   private readonly parentContextSignal = createParentContextSignal()
   private readonly unsubscribe: () => void
 
@@ -19,7 +19,7 @@ export class Container<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends
     this.matrixAutoUpdate = false
     setupParentContextSignal(this.parentContextSignal, this)
     this.propertiesSignal = deepSignal(properties ?? {})
-    this.defaultPropertiesSignal = signal(defaultProperties)
+    this.defaultPropertiesSignal = deepSignal(defaultProperties ?? {})
     this.unsubscribe = effect(() => {
       const parentContext = this.parentContextSignal.value?.value
       if (parentContext == null) {
@@ -58,7 +58,8 @@ export class Container<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends
   }
 
   getComputedProperty<K extends keyof ContainerProperties<EM>>(key: K): ContainerProperties<EM>[K] | undefined {
-    return untracked(() => this.internals.mergedProperties?.value.read(key as string, undefined))
+    // @ts-expect-error
+    return untracked(() => this.internals.mergedProperties[key])
   }
 
   getStyle(): undefined | Readonly<ContainerProperties<EM>> {
@@ -74,7 +75,7 @@ export class Container<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends
   }
 
   setDefaultProperties(properties: AllOptionalProperties) {
-    this.defaultPropertiesSignal.value = properties
+    Object.assign(this.defaultPropertiesSignal, properties)
   }
 
   destroy() {

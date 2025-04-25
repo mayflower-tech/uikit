@@ -1,5 +1,5 @@
 import { Signal, effect, signal } from '@preact/signals-core'
-import { InstancedGlyph } from './instanced-glyph.js'
+import { InstancedGlyph, InstancedTextProperties } from './instanced-glyph.js'
 import { Matrix4, Vector2Tuple } from 'three'
 import { ClippingRect } from '../../clipping.js'
 import { ColorRepresentation, abortableEffect, alignmentXMap, alignmentYMap } from '../../utils.js'
@@ -18,6 +18,7 @@ import { Font } from '../font.js'
 import { MergedProperties, computedInheritableProperty } from '../../properties/index.js'
 import { FlexNode, FlexNodeState } from '../../flex/index.js'
 import { CaretTransformation } from '../../caret.js'
+import { ReadonlyDeepSignalObject } from '../../internals.js'
 
 export type TextAlignProperties = {
   textAlign?: keyof typeof alignmentXMap | 'block'
@@ -33,7 +34,13 @@ const defaultVerticalAlign: keyof typeof alignmentYMap = 'middle'
 const defaulttextAlign: keyof typeof alignmentXMap | 'block' = 'left'
 
 export function createInstancedText(
-  properties: Signal<MergedProperties>,
+  properties: ReadonlyDeepSignalObject<
+    InstancedTextProperties & {
+      depthTest?: boolean
+      depthWrite?: boolean
+      renderOrder?: number
+    }
+  >,
   textSignal: Signal<unknown | Signal<unknown> | Array<unknown | Signal<unknown>>>,
   matrix: Signal<Matrix4 | undefined>,
   node: Signal<FlexNode | undefined>,
@@ -94,11 +101,12 @@ export function createInstancedText(
     const instancedText = new InstancedText(
       glyphGroupManager.getGroup(
         orderInfo.value.majorIndex,
-        properties.value.read('depthTest', true),
-        properties.value.read('depthWrite', false),
-        properties.value.read('renderOrder', 0),
+        properties.depthTest ?? true,
+        properties.depthWrite ?? false,
+        properties.renderOrder ?? 0,
         font,
       ),
+      // @ts-expect-error
       textAlign,
       verticalAlign,
       color,

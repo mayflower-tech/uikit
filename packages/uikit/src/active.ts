@@ -1,4 +1,4 @@
-import { Signal } from '@preact/signals-core'
+import { computed, Signal } from '@preact/signals-core'
 import { AllOptionalProperties, Properties, WithClasses, traverseProperties } from './properties/default.js'
 import { createConditionalPropertyTranslator } from './utils.js'
 import { EventHandlers, ThreePointerEvent } from './events.js'
@@ -16,7 +16,7 @@ export function addActiveHandlers(
   target: EventHandlers,
   style: (WithClasses<WithActive<Properties>> & EventHandlers) | undefined,
   properties: DeepSignal<WithClasses<WithActive<Properties>> & EventHandlers>,
-  defaultProperties: AllOptionalProperties | undefined,
+  defaultProperties: DeepSignal<AllOptionalProperties>,
   activeSignal: Signal<Array<number>>,
 ): void {
   let activePropertiesExist = false
@@ -33,16 +33,18 @@ export function addActiveHandlers(
     return
   }
   const onLeave = ({ pointerId }: ThreePointerEvent) => {
-    activeSignal.value = activeSignal.value.filter((id) => id != pointerId)
-    if (activeSignal.value.length > 0) {
+    const newValue = activeSignal.value.filter((id) => id != pointerId)
+    activeSignal.value = newValue
+    if (newValue.length > 0) {
       return
     }
     properties?.onActiveChange?.(false)
     style?.onActiveChange?.(false)
   }
   addHandler('onPointerDown', target, ({ pointerId }) => {
-    activeSignal.value = [pointerId, ...activeSignal.value]
-    if (activeSignal.value.length != 1) {
+    const newValue = [pointerId, ...activeSignal.peek()]
+    activeSignal.value = newValue
+    if (newValue.length != 1) {
       return
     }
     properties?.onActiveChange?.(true)
@@ -56,3 +58,12 @@ export function createActivePropertyTransfomers(activeSignal: Signal<Array<numbe
     active: createConditionalPropertyTranslator(() => activeSignal.value.length > 0),
   }
 }
+
+export const createActiveStuff =
+  (activeSignal: Signal<Array<number>>) => (properties: WithActive<any>, key: string) => {
+    return computed(() => {
+      if (activeSignal.value.length > 0 && 'active' in properties) {
+        return properties.active?.[key]
+      }
+    })
+  }

@@ -1,4 +1,4 @@
-import { Signal } from '@preact/signals-core'
+import { computed, Signal } from '@preact/signals-core'
 import { createConditionalPropertyTranslator } from './utils.js'
 import { PropertyTransformers } from './properties/merged.js'
 import { EventHandlers } from './events.js'
@@ -22,7 +22,7 @@ export function addHoverHandlers(
   target: EventHandlers,
   style: WithHover<{}> | undefined,
   properties: DeepSignal<WithHover<{}>>,
-  defaultProperties: AllOptionalProperties | undefined,
+  defaultProperties: DeepSignal<AllOptionalProperties>,
   hoveredSignal: Signal<Array<number>>,
   defaultCursor?: string,
 ): void {
@@ -40,8 +40,9 @@ export function addHoverHandlers(
     return
   }
   addHandler('onPointerOver', target, ({ pointerId }) => {
-    hoveredSignal.value = [pointerId, ...hoveredSignal.value]
-    if (hoveredSignal.value.length === 1) {
+    const newValue = [pointerId, ...hoveredSignal.peek()]
+    hoveredSignal.value = newValue
+    if (newValue.length === 1) {
       properties?.onHoverChange?.(true)
       style?.onHoverChange?.(true)
     }
@@ -50,8 +51,9 @@ export function addHoverHandlers(
     }
   })
   addHandler('onPointerOut', target, ({ pointerId }) => {
-    hoveredSignal.value = hoveredSignal.value.filter((id) => id != pointerId)
-    if (hoveredSignal.value.length === 0) {
+    const newValue = hoveredSignal.peek().filter((id) => id != pointerId)
+    hoveredSignal.value = newValue
+    if (newValue.length === 0) {
       properties?.onHoverChange?.(false)
       style?.onHoverChange?.(false)
     }
@@ -83,3 +85,12 @@ export function unsetCursorType(ref: unknown): void {
   cursorTypeStack.splice(index, 1)
   document.body.style.cursor = cursorTypeStack[cursorTypeStack.length - 1] ?? 'default'
 }
+
+export const createHoveredStuff =
+  (hoveredSignal: Signal<Array<number>>) => (properties: WithHover<any>, key: string) => {
+    return computed(() => {
+      if (hoveredSignal.value.length > 0 && 'hover' in properties) {
+        return properties.hover?.[key]
+      }
+    })
+  }

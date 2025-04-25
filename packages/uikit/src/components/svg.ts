@@ -31,17 +31,18 @@ import {
   disposeGroup,
   keepAspectRatioPropertyTransformer,
   loadResourceWithParams,
+  mergeProps,
 } from './utils.js'
 import { abortableEffect, ColorRepresentation, fitNormalizedContentInside, readReactive } from '../utils.js'
 import { makeClippedCast, PointerEventsProperties } from '../panel/interaction-panel-mesh.js'
 import { computedIsClipped, ClippingRect, createGlobalClippingPlanes } from '../clipping.js'
 import { setupLayoutListeners, setupClippedListeners } from '../listeners.js'
-import { createActivePropertyTransfomers } from '../active.js'
-import { createHoverPropertyTransformers, setupCursorCleanup } from '../hover.js'
+import { createActivePropertyTransfomers, createActiveStuff } from '../active.js'
+import { createHoveredStuff, createHoverPropertyTransformers, setupCursorCleanup } from '../hover.js'
 import { createInteractionPanel, setupInteractionPanel } from '../panel/instanced-panel-mesh.js'
-import { createResponsivePropertyTransformers } from '../responsive.js'
+import { createResponsivePropertyStuff, createResponsivePropertyTransformers } from '../responsive.js'
 import { SVGLoader, SVGResult } from 'three/examples/jsm/loaders/SVGLoader.js'
-import { darkPropertyTransformers } from '../dark.js'
+import { darkPropertyTransformers, darkStuff } from '../dark.js'
 import { PanelGroupProperties, computedPanelGroupDependencies, getDefaultPanelMaterialConfig } from '../panel/index.js'
 import { KeepAspectRatioProperties } from './image.js'
 import {
@@ -54,6 +55,7 @@ import {
   computedAncestorsHaveListeners,
   computedClippingRect,
 } from '../internals.js'
+import { SVGProps } from 'react'
 
 export type InheritableSvgProperties = WithClasses<
   WithConditionals<
@@ -89,7 +91,7 @@ export function createSvgState<EM extends ThreeEventMap = ThreeEventMap>(
   objectRef: { current?: Object3D | null },
   style: Signal<SvgProperties<EM> | undefined>,
   properties: DeepSignal<SvgProperties<EM>>,
-  defaultProperties: Signal<AllOptionalProperties | undefined>,
+  defaultProperties: DeepSignal<AllOptionalProperties>,
 ) {
   const flexState = createFlexNodeState()
   const hoveredSignal = signal<Array<number>>([])
@@ -97,18 +99,29 @@ export function createSvgState<EM extends ThreeEventMap = ThreeEventMap>(
   const aspectRatio = signal<number | undefined>(undefined)
   const svgObject = signal<Object3D | undefined>(undefined)
 
-  const mergedProperties = computedMergedProperties(
-    style,
+  // const mergedProperties = computedMergedProperties(
+  //   style,
+  //   properties,
+  //   defaultProperties,
+  //   {
+  //     ...darkPropertyTransformers,
+  //     ...createResponsivePropertyTransformers(parentCtx.root.size),
+  //     ...createHoverPropertyTransformers(hoveredSignal),
+  //     ...createActivePropertyTransfomers(activeSignal),
+  //   },
+  //   keepAspectRatioPropertyTransformer,
+  //   (m) => m.add('aspectRatio', aspectRatio),
+  // )
+
+  const mergedProperties = mergeProps<SvgProperties<EM> & { updateMatrixWorld?: boolean }>(
     properties,
     defaultProperties,
-    {
-      ...darkPropertyTransformers,
-      ...createResponsivePropertyTransformers(parentCtx.root.size),
-      ...createHoverPropertyTransformers(hoveredSignal),
-      ...createActivePropertyTransfomers(activeSignal),
-    },
-    keepAspectRatioPropertyTransformer,
-    (m) => m.add('aspectRatio', aspectRatio),
+    [
+      [0, darkStuff],
+      [10, createResponsivePropertyStuff(flexState.size)],
+      [20, createHoveredStuff(hoveredSignal)],
+      [30, createActiveStuff(activeSignal)],
+    ],
   )
 
   const transformMatrix = computedTransformMatrix(mergedProperties, flexState, parentCtx.root.pixelSize)

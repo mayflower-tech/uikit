@@ -10,7 +10,7 @@ export class Svg<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Paren
   private mergedProperties?: ReadonlySignal<MergedProperties>
   private readonly styleSignal: Signal<SvgProperties<EM> | undefined> = signal(undefined)
   private readonly propertiesSignal: DeepSignal<SvgProperties<EM>>
-  private readonly defaultPropertiesSignal: Signal<AllOptionalProperties | undefined>
+  private readonly defaultPropertiesSignal: DeepSignal<AllOptionalProperties>
   private readonly parentContextSignal = createParentContextSignal()
   private readonly unsubscribe: () => void
 
@@ -21,7 +21,7 @@ export class Svg<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Paren
     this.matrixAutoUpdate = false
     setupParentContextSignal(this.parentContextSignal, this)
     this.propertiesSignal = deepSignal(properties ?? {})
-    this.defaultPropertiesSignal = signal(defaultProperties)
+    this.defaultPropertiesSignal = deepSignal(defaultProperties ?? {})
 
     this.unsubscribe = effect(() => {
       const parentContext = this.parentContextSignal.value?.value
@@ -61,7 +61,8 @@ export class Svg<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Paren
   }
 
   getComputedProperty<K extends keyof SvgProperties<EM>>(key: K): SvgProperties<EM>[K] | undefined {
-    return untracked(() => this.mergedProperties?.value.read(key as string, undefined))
+    // @ts-expect-error
+    return untracked(() => this.internals.mergedProperties[key])
   }
 
   getStyle(): undefined | Readonly<SvgProperties<EM>> {
@@ -77,7 +78,7 @@ export class Svg<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Paren
   }
 
   setDefaultProperties(properties: AllOptionalProperties) {
-    this.defaultPropertiesSignal.value = properties
+    Object.assign(this.defaultPropertiesSignal, properties)
   }
 
   destroy() {

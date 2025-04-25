@@ -25,7 +25,8 @@ export type AllOptionalProperties =
   | InheritableInputProperties
 
 export type WithReactive<T> = {
-  [Key in keyof T]?: T[Key] | ReadonlySignal<T[Key] | undefined>
+  // [Key in keyof T]?: T[Key] | ReadonlySignal<T[Key] | undefined>
+  [Key in keyof T]?: T[Key]
 }
 
 export type Properties = Record<string, unknown>
@@ -35,7 +36,7 @@ export type WithClasses<T extends object> = T & { classes?: T | Array<T> }
 export function traverseProperties<T extends object>(
   style: WithClasses<T> | undefined,
   properties: DeepSignal<WithClasses<T>>,
-  defaultProperties: AllOptionalProperties | undefined,
+  defaultProperties: DeepSignal<AllOptionalProperties>,
   fn: (properties: T | DeepSignal<T>) => void,
 ): void {
   if (defaultProperties != null) {

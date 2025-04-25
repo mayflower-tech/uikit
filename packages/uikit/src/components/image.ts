@@ -56,6 +56,8 @@ import {
   setupMatrixWorldUpdate,
   setupPointerEvents,
   computedAncestorsHaveListeners,
+  mergeProps,
+  ReadonlyDeepSignalObject,
 } from './utils.js'
 import { MergedProperties } from '../properties/merged.js'
 import { abortableEffect, readReactive } from '../utils.js'
@@ -70,11 +72,11 @@ import {
 import { computedClippingRect, computedIsClipped, createGlobalClippingPlanes } from '../clipping.js'
 import { setupLayoutListeners, setupClippedListeners } from '../listeners.js'
 import { computedInheritableProperty } from '../properties/utils.js'
-import { createActivePropertyTransfomers } from '../active.js'
-import { createHoverPropertyTransformers, setupCursorCleanup } from '../hover.js'
-import { createResponsivePropertyTransformers } from '../responsive.js'
+import { createActivePropertyTransfomers, createActiveStuff } from '../active.js'
+import { createHoveredStuff, createHoverPropertyTransformers, setupCursorCleanup } from '../hover.js'
+import { createResponsivePropertyStuff, createResponsivePropertyTransformers } from '../responsive.js'
 import { AppearanceProperties } from './svg.js'
-import { darkPropertyTransformers } from '../dark.js'
+import { darkPropertyTransformers, darkStuff } from '../dark.js'
 import { ThreeEventMap } from '../events.js'
 import { DeepSignal } from 'deepsignal/core'
 
@@ -120,7 +122,7 @@ export function createImageState<EM extends ThreeEventMap = ThreeEventMap>(
   objectRef: { current?: Object3D | null },
   style: Signal<ImageProperties<EM> | undefined>,
   properties: DeepSignal<ImageProperties<EM>>,
-  defaultProperties: Signal<AllOptionalProperties | undefined>,
+  defaultProperties: DeepSignal<AllOptionalProperties>,
 ) {
   const flexState = createFlexNodeState()
   const texture = signal<Texture | undefined>(undefined)
@@ -138,19 +140,25 @@ export function createImageState<EM extends ThreeEventMap = ThreeEventMap>(
     return image.width / image.height
   })
 
-  const mergedProperties = computedMergedProperties(
-    style,
-    properties,
-    defaultProperties,
-    {
-      ...darkPropertyTransformers,
-      ...createResponsivePropertyTransformers(parentCtx.root.size),
-      ...createHoverPropertyTransformers(hoveredSignal),
-      ...createActivePropertyTransfomers(activeSignal),
-    },
-    keepAspectRatioPropertyTransformer,
-    (m) => m.add('aspectRatio', textureAspectRatio),
-  )
+  // const mergedProperties = computedMergedProperties(
+  //   style,
+  //   properties,
+  //   defaultProperties,
+  //   {
+  //     ...darkPropertyTransformers,
+  //     ...createResponsivePropertyTransformers(parentCtx.root.size),
+  //     ...createHoverPropertyTransformers(hoveredSignal),
+  //     ...createActivePropertyTransfomers(activeSignal),
+  //   },
+  //   keepAspectRatioPropertyTransformer,
+  //   (m) => m.add('aspectRatio', textureAspectRatio),
+  // )
+  const mergedProperties = mergeProps<ImageProperties<EM>>(properties, defaultProperties, [
+    [0, darkStuff],
+    [10, createResponsivePropertyStuff(parentCtx.root.size)],
+    [20, createHoveredStuff(hoveredSignal)],
+    [30, createActiveStuff(activeSignal)],
+  ])
 
   const transformMatrix = computedTransformMatrix(mergedProperties, flexState, parentCtx.root.pixelSize)
   const globalMatrix = computedGlobalMatrix(parentCtx.childrenMatrix, transformMatrix)
@@ -267,7 +275,17 @@ export function setupImage<EM extends ThreeEventMap = ThreeEventMap>(
   )
 }
 
-let imageMaterialConfig: PanelMaterialConfig | undefined
+type ImagePanelMaterialConfigPropKeys =
+  | 'borderBend'
+  | 'borderBottomLeftRadius'
+  | 'borderBottomRightRadius'
+  | 'borderColor'
+  | 'borderOpacity'
+  | 'borderTopLeftRadius'
+  | 'borderTopRightRadius'
+  | 'opacity'
+
+let imageMaterialConfig: PanelMaterialConfig<ImagePanelMaterialConfigPropKeys> | undefined
 function getImageMaterialConfig() {
   imageMaterialConfig ??= createPanelMaterialConfig(
     {
@@ -322,7 +340,7 @@ function createImageMesh(
 
 function setupImageMesh(
   mesh: Mesh & { boundingSphere: Sphere },
-  propertiesSignal: Signal<MergedProperties>,
+  propertiesSignal: ReadonlyDeepSignalObject<{}>,
   textureSignal: Signal<Texture | undefined>,
   globalMatrix: Signal<Matrix4 | undefined>,
   parentContext: ParentContext,
@@ -447,7 +465,7 @@ async function loadTextureImpl(src?: string | Texture): Promise<(Texture & { dis
 }
 
 function setupImageMaterials(
-  propertiesSignal: Signal<MergedProperties>,
+  propertiesSignal: ReadonlyDeepSignalObject<{}>,
   textureSignal: Signal<Texture | undefined>,
   target: Mesh,
   size: Signal<Vector2Tuple | undefined>,

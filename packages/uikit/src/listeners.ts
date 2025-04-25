@@ -3,6 +3,7 @@ import { Vector2Tuple } from 'three'
 import { ThreeMouseEvent, ThreePointerEvent } from './events.js'
 import { abortableEffect } from './utils.js'
 import { DeepSignal } from 'deepsignal/core'
+import { ReadonlyDeepSignalObject } from './internals.js'
 
 export type Listeners = ScrollListeners & LayoutListeners & ClippedListeners
 
@@ -33,7 +34,7 @@ export type ClippedListeners = {
 
 export function setupLayoutListeners(
   l1: Signal<LayoutListeners | undefined>,
-  l2: DeepSignal<LayoutListeners>,
+  l2: ReadonlyDeepSignalObject<LayoutListeners>,
   size: Signal<Vector2Tuple | undefined>,
   abortSignal: AbortSignal,
 ) {
@@ -49,7 +50,7 @@ export function setupLayoutListeners(
 
 export function setupClippedListeners(
   l1: Signal<ClippedListeners | undefined>,
-  l2: DeepSignal<ClippedListeners>,
+  l2: ReadonlyDeepSignalObject<ClippedListeners>,
   isClippedSignal: Signal<boolean>,
   abortSignal: AbortSignal,
 ) {

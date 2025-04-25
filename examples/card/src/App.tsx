@@ -61,6 +61,7 @@ export function CardPage() {
     <Root flexDirection="column" pixelSize={0.01} sizeX={4.4}>
       <Defaults>
         <Container
+          style={{ backgroundColor: 'transparent' }}
           backgroundColor={0xffffff}
           dark={{ backgroundColor: 0x0 }}
           borderRadius={20}

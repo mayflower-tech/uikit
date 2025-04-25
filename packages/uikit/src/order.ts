@@ -3,6 +3,8 @@ import { RenderItem } from 'three'
 import { MergedProperties } from './properties/merged.js'
 import { computedInheritableProperty } from './properties/index.js'
 import { readReactive } from './utils.js'
+import { DeepSignal } from 'deepsignal/core'
+import { ReadonlyDeepSignalObject } from './components/utils.js'
 
 export type WithReversePainterSortStableCache = { reversePainterSortStableCache?: number }
 
@@ -79,17 +81,13 @@ export type ZIndexProperties = {
 
 export type ZIndexOffset = { major?: number; minor?: number } | number
 
-export function computedOrderInfo(
-  propertiesSignal: Signal<MergedProperties> | undefined,
-  zIndexOffsetKey: string,
+export function computedOrderInfo<K extends 'zIndexOffset' | 'scrollbarZIndexOffset'>(
+  propertiesSignal: ReadonlyDeepSignalObject<{ [TK in K]?: ZIndexOffset }> | undefined,
+  zIndexOffsetKey: K,
   type: ElementType,
   instancedGroupDependencies: Signal<Record<string, any>> | Record<string, any> | undefined,
   parentOrderInfoSignal: Signal<OrderInfo | undefined> | undefined,
 ): Signal<OrderInfo | undefined> {
-  const zIndexOffset =
-    propertiesSignal == null
-      ? undefined
-      : computedInheritableProperty<ZIndexOffset | undefined>(propertiesSignal, zIndexOffsetKey, undefined)
   return computed(() => {
     let parentOrderInfo: OrderInfo | undefined
     if (parentOrderInfoSignal == null) {
@@ -100,7 +98,7 @@ export function computedOrderInfo(
       parentOrderInfo = parentOrderInfoSignal.value
     }
 
-    const offset = zIndexOffset?.value
+    const offset = propertiesSignal?.[zIndexOffsetKey]
 
     const majorOffset = typeof offset === 'number' ? offset : (offset?.major ?? 0)
     const minorOffset = typeof offset === 'number' ? 0 : (offset?.minor ?? 0)
