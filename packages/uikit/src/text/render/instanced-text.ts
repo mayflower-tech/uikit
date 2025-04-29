@@ -106,7 +106,6 @@ export function createInstancedText(
         properties.renderOrder ?? 0,
         font,
       ),
-      // @ts-expect-error
       textAlign,
       verticalAlign,
       color,

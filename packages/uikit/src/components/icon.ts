@@ -23,6 +23,7 @@ import {
   setupPointerEvents,
   computedAncestorsHaveListeners,
   mergeProps,
+  ReadonlyDeepSignalObject,
 } from './utils.js'
 import { abortableEffect, fitNormalizedContentInside } from '../utils.js'
 import { makeClippedCast, PointerEventsProperties } from '../panel/interaction-panel-mesh.js'
@@ -244,7 +245,7 @@ function createIconGroup(
 
 function setupIconGroup(
   group: Group,
-  propertiesSignal: Signal<MergedProperties>,
+  propertiesSignal: ReadonlyDeepSignalObject<IconProperties>,
   svgWidth: number,
   svgHeight: number,
   parentContext: ParentContext,

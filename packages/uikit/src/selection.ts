@@ -39,7 +39,14 @@ export type SelectionProperties = {
     > as `selection${Capitalize<Key>}`]?: PanelProperties[Key]
   }
 
-let selectionMaterialConfig: PanelMaterialConfig | undefined
+type SelectionMaterialConfigPropKeys =
+  | (typeof selectionBorderKeys)[number]
+  | 'selectionColor'
+  | 'selectionOpacity'
+  | 'selectionBorderColor'
+  | 'selectionBorderOpacity'
+
+let selectionMaterialConfig: PanelMaterialConfig<SelectionMaterialConfigPropKeys> | undefined
 function getSelectionMaterialConfig() {
   selectionMaterialConfig ??= createPanelMaterialConfig(
     {

@@ -41,6 +41,7 @@ export const Icon: (props: IconProperties & RefAttributes<IconRef>) => ReactNode
     }
     const abortController = new AbortController()
     setupIcon<R3FEventMap>(
+      // @ts-expect-error
       internals,
       parent,
       propertySignals.style,
@@ -51,6 +52,7 @@ export const Icon: (props: IconProperties & RefAttributes<IconRef>) => ReactNode
     return () => abortController.abort()
   }, [parent, propertySignals, internals])
 
+  // @ts-expect-error
   useComponentInternals(ref, parent.root, propertySignals.style, internals, internals.interactionPanel)
 
   return (

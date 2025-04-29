@@ -93,6 +93,7 @@ export const Video: (props: VideoProperties & RefAttributes<VideoRef>) => ReactN
 
     return (
       <VideoContext.Provider value={element}>
+        {/* @ts-expect-error */}
         <Image aspectRatio={aspectRatio} {...props} ref={internalRef} src={texture} />
       </VideoContext.Provider>
     )

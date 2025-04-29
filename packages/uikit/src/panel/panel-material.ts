@@ -93,9 +93,16 @@ export function createPanelMaterialConfig<PropK extends string>(
   for (const materialSetterKey in keys) {
     const fn = materialSetters[materialSetterKey as MaterialSettersKeys]
     const defaultValue = defaults[materialSetterKey as MaterialSettersKeys]
-    const propertiesKey = keys[materialSetterKey as MaterialSettersKeys]
-    setters[propertiesKey] = (data, offset, value, size, onUpdate) =>
+    const propertiesKey = keys[materialSetterKey as MaterialSettersKeys]!
+    setters[propertiesKey] = (
+      data: TypedArray,
+      offset: number,
+      value: unknown,
+      size: Signal<Vector2Tuple | undefined>,
+      onUpdate: ((start: number, count: number) => void) | undefined,
+    ): void => {
       fn(data, offset, (value ?? defaultValue) as any, size, onUpdate)
+    }
   }
 
   const defaultData = new Float32Array(16) //filled with 0s by default
@@ -116,15 +123,15 @@ export function createPanelMaterialConfig<PropK extends string>(
         const borderOpacity =
           keys.borderOpacity == null
             ? defaults.borderOpacity
-            : (propertiesSignal[keys.borderOpacity] ?? defaults.borderOpacity)
+            : ((propertiesSignal[keys.borderOpacity] as number) ?? defaults.borderOpacity)
         const backgroundOpacity =
           keys.backgroundOpacity == null
             ? defaults.backgroundOpacity
-            : (propertiesSignal[keys.backgroundOpacity] ?? defaults.backgroundOpacity)
+            : ((propertiesSignal[keys.backgroundOpacity] as number) ?? defaults.backgroundOpacity)
         const backgroundColor =
           keys.backgroundColor == null
             ? defaults.backgroundColor
-            : (propertiesSignal[keys.backgroundColor] ?? defaults.backgroundColor)
+            : ((propertiesSignal[keys.backgroundColor] as ColorRepresentation) ?? defaults.backgroundColor)
         const borderVisible = borderInset.value.some((s) => s > 0) && borderOpacity > 0
         const [width, height] = size.value
         const backgroundVisible =

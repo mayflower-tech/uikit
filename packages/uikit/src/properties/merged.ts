@@ -123,6 +123,7 @@ export class MergedProperties {
     defaultProperties: AllOptionalProperties | undefined,
     postTransformers: PropertyTransformers,
   ): void {
+    // @ts-expect-error
     traverseProperties(style, properties, defaultProperties, (p) => {
       for (const key in p) {
         // @ts-expect-error

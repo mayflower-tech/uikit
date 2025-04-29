@@ -5,9 +5,10 @@ import { DeepSignal, deepSignal } from 'deepsignal/core'
 import { InputProperties, createInputState, setupInput } from '../components/input.js'
 import { MergedProperties } from '../properties/index.js'
 import { ThreeEventMap } from '../events.js'
+import { ReadonlyDeepSignalObject } from '../internals.js'
 
 export class Input<T = {}, Em extends ThreeEventMap = ThreeEventMap> extends Component<T> {
-  private mergedProperties?: ReadonlySignal<MergedProperties>
+  private mergedProperties?: ReadonlyDeepSignalObject<InputProperties<Em>>
   private readonly styleSignal: Signal<InputProperties<Em> | undefined> = signal(undefined)
   private readonly propertiesSignal: DeepSignal<InputProperties<Em>>
   private readonly defaultPropertiesSignal: DeepSignal<AllOptionalProperties>
@@ -59,7 +60,8 @@ export class Input<T = {}, Em extends ThreeEventMap = ThreeEventMap> extends Com
   }
 
   getComputedProperty<K extends keyof InputProperties<Em>>(key: K): InputProperties<Em>[K] | undefined {
-    return untracked(() => this.mergedProperties?.value.read(key as string, undefined))
+    // @ts-expect-error
+    return untracked(() => this.internals.mergedProperties[key])
   }
 
   getStyle(): undefined | Readonly<InputProperties<Em>> {

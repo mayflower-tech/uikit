@@ -106,7 +106,12 @@ export function createCaret(
     return () => clearInterval(ref)
   }, abortSignal)
   const borderInset = computedBorderInset(propertiesSignal, caretBorderKeys)
-  const caretWidth = computedInheritableProperty<'caretWidth', number>(propertiesSignal, 'caretWidth', 1.5)
+  // @ts-expect-error
+  const caretWidth = computedInheritableProperty<'caretWidth', number>(
+    propertiesSignal,
+    'caretWidth',
+    1.5,
+  ) as ReadonlySignal<number>
 
   setupInstancedPanel(
     propertiesSignal,

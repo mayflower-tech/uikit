@@ -57,13 +57,10 @@ export function computedCustomLayouting(
     text = text.replaceAll('\t', ' '.repeat(4))
     const layoutProperties: GlyphLayoutProperties = {
       font,
-      // @ts-expect-error
       fontSize: fontSize.value,
-      // @ts-expect-error
       letterSpacing: letterSpacing.value,
       lineHeight: lineHeight.value,
       text,
-      // @ts-expect-error
       wordBreak: wordBreak.value,
     }
     propertiesRef.current = layoutProperties

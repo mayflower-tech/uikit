@@ -175,6 +175,7 @@ export const Portal: (props: PortalProperties & RefAttributes<PortalRef>) => Rea
           usePortalStore,
           null,
         )}
+        {/* @ts-expect-error */}
         <Image src={texture} objectFit="fill" keepAspectRatio={false} {...props} ref={imageRef} />
       </>
     )

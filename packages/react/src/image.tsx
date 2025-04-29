@@ -38,6 +38,7 @@ export const Image: (props: ImageProperties & RefAttributes<ImageRef>) => ReactN
     }
     const abortController = new AbortController()
     setupImage<R3FEventMap>(
+      // @ts-expect-error
       internals,
       parent,
       propertySignals.style,
@@ -49,12 +50,14 @@ export const Image: (props: ImageProperties & RefAttributes<ImageRef>) => ReactN
     return () => abortController.abort()
   }, [parent, propertySignals, internals])
 
+  // @ts-expect-error
   useComponentInternals(ref, parent.root, propertySignals.style, internals, internals.interactionPanel)
 
   return (
     <AddHandlers ref={outerRef} handlers={internals.handlers}>
       <primitive object={internals.interactionPanel} />
       <object3D matrixAutoUpdate={false} ref={innerRef}>
+        {/* @ts-expect-error */}
         <DefaultProperties {...internals.defaultProperties}>
           <ParentProvider value={internals}>{properties.children}</ParentProvider>
         </DefaultProperties>

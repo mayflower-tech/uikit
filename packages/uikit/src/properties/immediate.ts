@@ -2,11 +2,12 @@ import { Signal, effect, untracked } from '@preact/signals-core'
 import { MergedProperties } from './merged.js'
 import { abortableEffect } from '../utils.js'
 import { DeepSignal } from 'deepsignal/core'
+import { ReadonlyDeepSignalObject } from '../internals.js'
 
 type PropertySubscriptions = Record<string, () => void>
 
 export function setupImmediateProperties<PropK extends string>(
-  propertiesSignal: DeepSignal<Record<PropK, unknown>>,
+  propertiesSignal: ReadonlyDeepSignalObject<Record<PropK, unknown>>,
   activeSignal: Signal<boolean>,
   hasProperty: (key: string) => boolean,
   setProperty: (key: PropK, value: unknown) => void,
@@ -25,7 +26,7 @@ export function setupImmediateProperties<PropK extends string>(
       // applyProperties(hasProperty, newProperties, currentProperties, propertySubscriptions, setProperty)
       for (const key of keys) {
         const newValue = newProperties[key]
-        if (currentProperties[key] !== newValue[key]) {
+        if (currentProperties[key] !== newValue) {
           currentProperties[key] = newValue
           setProperty(key, newValue)
         }

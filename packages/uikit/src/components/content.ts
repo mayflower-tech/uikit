@@ -281,7 +281,6 @@ function setupContentContainer(
 
     contentContainer.position.copy(measuredCenter).negate()
 
-    // @ts-expect-error
     contentContainer.position.z -= alignmentZMap[depthAlign.value] * measuredSize.z
     contentContainer.position.multiply(contentContainer.scale)
     contentContainer.position.add(

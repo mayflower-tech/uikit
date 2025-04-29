@@ -137,11 +137,11 @@ export function setupCustomContainer<EM extends ThreeEventMap = ThreeEventMap>(
     material.needsUpdate = true
     material.shadowSide = FrontSide
     abortableEffect(() => {
-      material.depthTest = state.mergedProperties.value.read('depthTest', true)
+      material.depthTest = state.mergedProperties.depthTest ?? true
       parentCtx.root.requestRender()
     }, abortSignal)
     abortableEffect(() => {
-      material.depthWrite = state.mergedProperties.value.read('depthWrite', false)
+      material.depthWrite = state.mergedProperties.depthWrite ?? false
       parentCtx.root.requestRender()
     }, abortSignal)
   }
@@ -157,15 +157,15 @@ export function setupCustomContainer<EM extends ThreeEventMap = ThreeEventMap>(
   setupRenderOrder(mesh, parentCtx.root, state.orderInfo)
 
   abortableEffect(() => {
-    mesh.renderOrder = state.mergedProperties.value.read('renderOrder', 0)
+    mesh.renderOrder = state.mergedProperties.renderOrder ?? 0
     parentCtx.root.requestRender()
   }, abortSignal)
   abortableEffect(() => {
-    mesh.receiveShadow = state.mergedProperties.value.read('receiveShadow', false)
+    mesh.receiveShadow = state.mergedProperties.receiveShadow ?? false
     parentCtx.root.requestRender()
   }, abortSignal)
   abortableEffect(() => {
-    mesh.castShadow = state.mergedProperties.value.read('castShadow', false)
+    mesh.castShadow = state.mergedProperties.castShadow ?? false
     parentCtx.root.requestRender()
   }, abortSignal)
   abortableEffect(() => {

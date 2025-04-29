@@ -45,6 +45,7 @@ export class Video<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Ima
   setProperties(props: VideoProperties<EM> & ImageProperties<EM>): void {
     updateVideoElement(this.element, props)
     super.setProperties({
+      // @ts-expect-error
       aspectRatio: this.aspectRatio,
       ...props,
       src: this.texture,

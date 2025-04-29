@@ -2,12 +2,11 @@ import { AllOptionalProperties } from '../properties/default.js'
 import { Parent, createParentContextSignal, bindHandlers, setupParentContextSignal } from './utils.js'
 import { ReadonlySignal, Signal, effect, signal, untracked } from '@preact/signals-core'
 import { DeepSignal, deepSignal } from 'deepsignal/core'
-import { SvgProperties, createSvgState, setupSvg } from '../components/index.js'
-import { MergedProperties } from '../properties/index.js'
+import { ReadonlyDeepSignalObject, SvgProperties, createSvgState, setupSvg } from '../components/index.js'
 import { ThreeEventMap } from '../events.js'
 
 export class Svg<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Parent<T> {
-  private mergedProperties?: ReadonlySignal<MergedProperties>
+  private mergedProperties?: ReadonlyDeepSignalObject<SvgProperties<EM>>
   private readonly styleSignal: Signal<SvgProperties<EM> | undefined> = signal(undefined)
   private readonly propertiesSignal: DeepSignal<SvgProperties<EM>>
   private readonly defaultPropertiesSignal: DeepSignal<AllOptionalProperties>

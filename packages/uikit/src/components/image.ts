@@ -27,6 +27,7 @@ import {
   PanelProperties,
   PanelMaterialConfig,
   computedPanelGroupDependencies,
+  MaterialClass,
 } from '../panel/index.js'
 import { WithAllAliases } from '../properties/alias.js'
 import { AllOptionalProperties, WithClasses, WithReactive } from '../properties/default.js'
@@ -465,7 +466,14 @@ async function loadTextureImpl(src?: string | Texture): Promise<(Texture & { dis
 }
 
 function setupImageMaterials(
-  propertiesSignal: ReadonlyDeepSignalObject<{}>,
+  propertiesSignal: ReadonlyDeepSignalObject<{
+    panelMaterialClass?: MaterialClass
+    depthTest?: boolean
+    depthWrite?: boolean
+    renderOrder?: number
+    castShadow?: boolean
+    receiveShadow?: boolean
+  }>,
   textureSignal: Signal<Texture | undefined>,
   target: Mesh,
   size: Signal<Vector2Tuple | undefined>,
@@ -483,15 +491,15 @@ function setupImageMaterials(
   target.customDistanceMaterial.clippingPlanes = clippingPlanes
 
   abortableEffect(() => {
-    const material = createPanelMaterial(propertiesSignal.value.read('panelMaterialClass', MeshBasicMaterial), info)
+    const material = createPanelMaterial(propertiesSignal.panelMaterialClass ?? MeshBasicMaterial, info)
     material.clippingPlanes = clippingPlanes
     target.material = material
     const cleanupDepthTestEffect = effect(() => {
-      material.depthTest = propertiesSignal.value.read('depthTest', true)
+      material.depthTest = propertiesSignal.depthTest ?? true
       root.requestRender()
     })
     const cleanupDepthWriteEffect = effect(() => {
-      material.depthWrite = propertiesSignal.value.read('depthWrite', false)
+      material.depthWrite = propertiesSignal.depthWrite ?? false
       root.requestRender()
     })
     const cleanupTextureEffect = effect(() => {
@@ -507,15 +515,15 @@ function setupImageMaterials(
     }
   }, abortSignal)
   abortableEffect(() => {
-    target.renderOrder = propertiesSignal.value.read('renderOrder', 0)
+    target.renderOrder = propertiesSignal.renderOrder ?? 0
     root.requestRender()
   }, abortSignal)
   abortableEffect(() => {
-    target.castShadow = propertiesSignal.value.read('castShadow', false)
+    target.castShadow = propertiesSignal.castShadow ?? false
     root.requestRender()
   }, abortSignal)
   abortableEffect(() => {
-    target.receiveShadow = propertiesSignal.value.read('receiveShadow', false)
+    target.receiveShadow = propertiesSignal.receiveShadow ?? false
     root.requestRender()
   }, abortSignal)
 
@@ -538,13 +546,16 @@ function setupImageMaterials(
   }, abortSignal)
   const setters = imageMaterialConfig.setters
   setupImmediateProperties(
+    // @ts-expect-error
     propertiesSignal,
     isVisible,
     imageMaterialConfig.hasProperty,
     (key, value) => {
+      // @ts-expect-error
       setters[key](data, 0, value as any, size, undefined)
       root.requestRender()
     },
     abortSignal,
+    Object.keys(setters) as unknown as keyof typeof setters,
   )
 }

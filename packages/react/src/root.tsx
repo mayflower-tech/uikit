@@ -69,6 +69,7 @@ export const Root: (props: RootProperties & RefAttributes<RootRef>) => ReactNode
     }
     const abortController = new AbortController()
     setupRoot<R3FEventMap>(
+      // @ts-expect-error
       internals,
       propertySignals.style,
       propertySignals.properties,
@@ -88,12 +89,14 @@ export const Root: (props: RootProperties & RefAttributes<RootRef>) => ReactNode
     whileOnFrameRef.current = false
   })
 
+  // @ts-expect-error
   useComponentInternals(ref, internals.root, propertySignals.style, internals, internals.interactionPanel)
 
   return (
     <AddHandlers handlers={internals.handlers} ref={outerRef}>
       <primitive object={internals.interactionPanel} />
       <object3D matrixAutoUpdate={false} ref={innerRef}>
+        {/* @ts-expect-error */}
         <DefaultProperties {...internals.defaultProperties}>
           <ParentProvider value={internals}>{properties.children}</ParentProvider>
         </DefaultProperties>
