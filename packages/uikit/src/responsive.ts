@@ -1,4 +1,4 @@
-import { Signal } from '@preact/signals-core'
+import { computed, Signal } from '@preact/signals-core'
 import { createConditionalPropertyTranslator } from './utils.js'
 import { Vector2Tuple } from 'three'
 import { PropertyTransformers } from './properties/merged.js'
@@ -27,3 +27,19 @@ export function createResponsivePropertyTransformers(rootSize: Signal<Vector2Tup
 
   return transformers
 }
+
+export const createResponsivePropertyStuff =
+  (rootSize: Signal<Vector2Tuple | undefined>) =>
+  (properties: Partial<Record<keyof typeof breakPoints, any>>, key: string) => {
+    return computed(() => {
+      for (let i = 0; i < breakPointKeysLength; i++) {
+        const rootSizeVal = rootSize.value?.[0] ?? 0
+        if (rootSizeVal > breakPoints[key as keyof typeof breakPoints]) {
+          const responsiveValue = properties[breakPointKeys[i]]
+          if (responsiveValue != null) {
+            return responsiveValue[key]
+          }
+        }
+      }
+    })
+  }

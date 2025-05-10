@@ -41,6 +41,7 @@ export function useMeasureText(fontFamily?: string, fontWeight?: FontWeight) {
   const fontFamilies = useMemo(() => signal<FontFamilies | undefined>(undefined as any), [])
   fontFamilies.value = useFontFamilies()
   const font = useMemo(
+    // @ts-expect-error
     () => computedFont(propertiesSignal, fontFamilies, renderer),
     [fontFamilies, propertiesSignal, renderer],
   )

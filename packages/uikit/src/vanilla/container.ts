@@ -3,11 +3,12 @@ import { AllOptionalProperties } from '../properties/default.js'
 import { Signal, effect, signal, untracked } from '@preact/signals-core'
 import { Parent, createParentContextSignal, setupParentContextSignal, bindHandlers } from './utils.js'
 import { ThreeEventMap } from '../events.js'
+import { DeepSignal, deepSignal } from 'deepsignal/core'
 
 export class Container<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Parent<T> {
   private readonly styleSignal: Signal<ContainerProperties<EM> | undefined> = signal(undefined)
-  private readonly propertiesSignal: Signal<ContainerProperties<EM> | undefined>
-  private readonly defaultPropertiesSignal: Signal<AllOptionalProperties | undefined>
+  private readonly propertiesSignal: DeepSignal<ContainerProperties<EM>>
+  private readonly defaultPropertiesSignal: DeepSignal<AllOptionalProperties>
   private readonly parentContextSignal = createParentContextSignal()
   private readonly unsubscribe: () => void
 
@@ -17,8 +18,8 @@ export class Container<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends
     super()
     this.matrixAutoUpdate = false
     setupParentContextSignal(this.parentContextSignal, this)
-    this.propertiesSignal = signal(properties)
-    this.defaultPropertiesSignal = signal(defaultProperties)
+    this.propertiesSignal = deepSignal(properties ?? {})
+    this.defaultPropertiesSignal = deepSignal(defaultProperties ?? {})
     this.unsubscribe = effect(() => {
       const parentContext = this.parentContextSignal.value?.value
       if (parentContext == null) {
@@ -57,7 +58,8 @@ export class Container<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends
   }
 
   getComputedProperty<K extends keyof ContainerProperties<EM>>(key: K): ContainerProperties<EM>[K] | undefined {
-    return untracked(() => this.internals.mergedProperties?.value.read(key as string, undefined))
+    // @ts-expect-error
+    return untracked(() => this.internals.mergedProperties[key])
   }
 
   getStyle(): undefined | Readonly<ContainerProperties<EM>> {
@@ -69,11 +71,11 @@ export class Container<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends
   }
 
   setProperties(properties: ContainerProperties<EM> | undefined) {
-    this.propertiesSignal.value = properties
+    Object.assign(this.propertiesSignal, properties)
   }
 
   setDefaultProperties(properties: AllOptionalProperties) {
-    this.defaultPropertiesSignal.value = properties
+    Object.assign(this.defaultPropertiesSignal, properties)
   }
 
   destroy() {

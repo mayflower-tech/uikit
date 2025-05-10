@@ -46,6 +46,7 @@ export const Text: (props: TextProperties & RefAttributes<TextRef>) => ReactNode
     }
     const abortController = new AbortController()
     setupText<R3FEventMap>(
+      // @ts-expect-error
       internals,
       parent,
       propertySignals.style,
@@ -56,6 +57,7 @@ export const Text: (props: TextProperties & RefAttributes<TextRef>) => ReactNode
     return () => abortController.abort()
   }, [parent, propertySignals, internals])
 
+  // @ts-expect-error
   useComponentInternals(ref, parent.root, propertySignals.style, internals, internals.interactionPanel)
 
   return (

@@ -2,6 +2,7 @@ import { forwardRef, ReactNode, RefAttributes, useEffect, useMemo, useRef } from
 import { Object3D, Vector2Tuple } from 'three'
 import { useParent } from './context.js'
 import { AddHandlers, R3FEventMap, usePropertySignals } from './utils.js'
+
 import {
   FontFamilies,
   InputProperties as BaseInputProperties,
@@ -58,6 +59,7 @@ export const Input: (props: InputProperties & RefAttributes<InputRef>) => ReactN
     }
     const abortController = new AbortController()
     setupInput<R3FEventMap>(
+      // @ts-expect-error
       internals,
       parent,
       propertySignals.style,
@@ -73,6 +75,7 @@ export const Input: (props: InputProperties & RefAttributes<InputRef>) => ReactN
     ref,
     parent.root,
     propertySignals.style,
+    // @ts-expect-error
     internals,
     internals.interactionPanel,
     useMemo(

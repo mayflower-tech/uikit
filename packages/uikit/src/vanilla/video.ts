@@ -23,6 +23,7 @@ export class Video<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Ima
     const texture = new VideoTexture(element)
     texture.needsUpdate = true
     const aspectRatio = signal<number>(1)
+    // @ts-expect-error
     super({ aspectRatio, ...props, src: texture }, defaultProperties)
 
     this.unsubscribeInvalidate = effect(() => {
@@ -44,6 +45,7 @@ export class Video<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Ima
   setProperties(props: VideoProperties<EM> & ImageProperties<EM>): void {
     updateVideoElement(this.element, props)
     super.setProperties({
+      // @ts-expect-error
       aspectRatio: this.aspectRatio,
       ...props,
       src: this.texture,

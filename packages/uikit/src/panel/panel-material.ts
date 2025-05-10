@@ -11,16 +11,20 @@ import {
   WebGLRenderer,
 } from 'three'
 import { Constructor, setBorderRadius } from './utils.js'
-import { Signal, computed } from '@preact/signals-core'
+import { ReadonlySignal, Signal, computed } from '@preact/signals-core'
 import { ColorRepresentation } from '../utils.js'
 import { MergedProperties } from '../properties/index.js'
 import { Inset } from '../flex/index.js'
+import { DeepSignal } from 'deepsignal/core'
+import { ReadonlyDeepSignalObject } from '../internals.js'
 
 export type MaterialClass = { new (...args: Array<any>): Material }
 
 type InstanceOf<T> = T extends { new (): infer K } ? K : never
 
 const noColor = new Color(-1, -1, -1)
+
+type MaterialSettersKeys = keyof typeof materialSetters
 
 const defaultDefaults = {
   backgroundColor: noColor as ColorRepresentation,
@@ -32,47 +36,73 @@ const defaultDefaults = {
   borderTopRightRadius: 0,
   borderBend: 0,
   borderOpacity: 1,
-} satisfies { [Key in keyof typeof materialSetters]: unknown }
+} satisfies { [Key in MaterialSettersKeys]: unknown }
 
-export type PanelMaterialConfig = ReturnType<typeof createPanelMaterialConfig>
+type MaterialSetterFn = (
+  data: TypedArray,
+  offset: number,
+  value: unknown,
+  size: Signal<Vector2Tuple | undefined>,
+  onUpdate: ((start: number, count: number) => void) | undefined,
+) => void
 
-let defaultPanelMaterialConfig: PanelMaterialConfig | undefined
+export type PanelMaterialConfig<PropK extends string> = {
+  hasProperty: (key: string) => boolean
+  defaultData: TypedArray
+  setters: Record<PropK, MaterialSetterFn>
+  computedIsVisibile: (
+    propertiesSignal: ReadonlyDeepSignalObject<Partial<Record<PropK, unknown>>>,
+    borderInset: Signal<Inset | undefined>,
+    size: Signal<Vector2Tuple | undefined>,
+    isVisible: Signal<boolean>,
+  ) => ReadonlySignal<boolean>
+}
+
+let defaultPanelMaterialConfig: PanelMaterialConfig<keyof typeof defaultDefaults> | undefined
 export function getDefaultPanelMaterialConfig() {
   if (defaultPanelMaterialConfig == null) {
-    const defaultPanelMaterialKeys = {} as { [Key in keyof typeof defaultDefaults]: string }
+    const defaultPanelMaterialKeys = {} as { [Key in keyof typeof defaultDefaults]: keyof typeof defaultDefaults }
     for (const key in defaultDefaults) {
-      defaultPanelMaterialKeys[key as keyof typeof defaultDefaults] = key
+      defaultPanelMaterialKeys[key as keyof typeof defaultDefaults] = key as keyof typeof defaultDefaults
     }
     defaultPanelMaterialConfig = createPanelMaterialConfig(defaultPanelMaterialKeys)
   }
   return defaultPanelMaterialConfig
 }
 
-export function createPanelMaterialConfig(
-  keys: { [Key in keyof typeof materialSetters]?: string },
+export function createPanelMaterialConfig<PropK extends string>(
+  keys: Partial<Record<MaterialSettersKeys, PropK>>,
   overrideDefaults?: {
     [Key in Exclude<
       keyof typeof defaultDefaults,
       'borderBottomLeftRadius' | 'borderTopLeftRadius' | 'borderBottomRightRadius' | 'borderTopRightRadius'
     >]?: (typeof defaultDefaults)[Key]
   },
-) {
+): PanelMaterialConfig<PropK> {
   const defaults = { ...defaultDefaults, ...overrideDefaults }
 
   const setters: {
-    [Key in string]: (
+    [Key in PropK]: (
       data: TypedArray,
       offset: number,
       value: unknown,
       size: Signal<Vector2Tuple | undefined>,
       onUpdate: ((start: number, count: number) => void) | undefined,
     ) => void
-  } = {}
-  for (const key in keys) {
-    const fn = materialSetters[key as keyof typeof materialSetters]
-    const defaultValue = defaults[key as keyof typeof materialSetters]
-    setters[keys[key as keyof typeof materialSetters]!] = (data, offset, value, size, onUpdate) =>
+  } = {} as any
+  for (const materialSetterKey in keys) {
+    const fn = materialSetters[materialSetterKey as MaterialSettersKeys]
+    const defaultValue = defaults[materialSetterKey as MaterialSettersKeys]
+    const propertiesKey = keys[materialSetterKey as MaterialSettersKeys]!
+    setters[propertiesKey] = (
+      data: TypedArray,
+      offset: number,
+      value: unknown,
+      size: Signal<Vector2Tuple | undefined>,
+      onUpdate: ((start: number, count: number) => void) | undefined,
+    ): void => {
       fn(data, offset, (value ?? defaultValue) as any, size, onUpdate)
+    }
   }
 
   const defaultData = new Float32Array(16) //filled with 0s by default
@@ -85,12 +115,7 @@ export function createPanelMaterialConfig(
     hasProperty: (key: string) => key in setters,
     defaultData,
     setters,
-    computedIsVisibile: (
-      propertiesSignal: Signal<MergedProperties>,
-      borderInset: Signal<Inset | undefined>,
-      size: Signal<Vector2Tuple | undefined>,
-      isVisible: Signal<boolean>,
-    ) => {
+    computedIsVisibile: (propertiesSignal, borderInset, size, isVisible) => {
       return computed(() => {
         if (borderInset.value == null || size.value == null) {
           return true
@@ -98,15 +123,15 @@ export function createPanelMaterialConfig(
         const borderOpacity =
           keys.borderOpacity == null
             ? defaults.borderOpacity
-            : propertiesSignal.value.read(keys.borderOpacity, defaults.borderOpacity)
+            : ((propertiesSignal[keys.borderOpacity] as number) ?? defaults.borderOpacity)
         const backgroundOpacity =
           keys.backgroundOpacity == null
             ? defaults.backgroundOpacity
-            : propertiesSignal.value.read(keys.backgroundOpacity, defaults.backgroundOpacity)
+            : ((propertiesSignal[keys.backgroundOpacity] as number) ?? defaults.backgroundOpacity)
         const backgroundColor =
           keys.backgroundColor == null
             ? defaults.backgroundColor
-            : propertiesSignal.value.read(keys.backgroundColor, defaults.backgroundColor)
+            : ((propertiesSignal[keys.backgroundColor] as ColorRepresentation) ?? defaults.backgroundColor)
         const borderVisible = borderInset.value.some((s) => s > 0) && borderOpacity > 0
         const [width, height] = size.value
         const backgroundVisible =
@@ -357,7 +382,7 @@ function compilePanelClippingMaterial(parameters: WebGLProgramParametersWithUnif
           distanceToPlane = - dot( -localPosition, plane.xyz ) + plane.w;
           distanceGradient = fwidth( distanceToPlane ) / 2.0;
           clipOpacity *= smoothstep( - distanceGradient, distanceGradient, distanceToPlane );
-    
+
           if ( clipOpacity < 0.01 ) discard;
         }
         `
@@ -376,68 +401,68 @@ function compilePanelClippingMaterial(parameters: WebGLProgramParametersWithUnif
         vec4 borderSize = absoluteBorderSize / relative;
         vec4 v_outsideDistance = vec4(1.0 - vUv.y, (1.0 - vUv.x) * ratio, vUv.y, vUv.x * ratio);
         vec4 v_borderDistance = v_outsideDistance - borderSize;
-  
+
         vec2 distance = vec2(min4(v_outsideDistance), min4(v_borderDistance));
         vec4 negateBorderDistance = vec4(1.0) - v_borderDistance;
         float maxWeight = max4(negateBorderDistance);
         vec4 borderWeight = step(maxWeight, negateBorderDistance);
-  
+
         vec4 insideBorder;
-  
+
         if(all(lessThan(v_outsideDistance.xw, borderRadius.xx))) {
             distance = radiusDistance(borderRadius.x, v_outsideDistance.xw, v_borderDistance.xw, borderSize.xw);
-            
+
             float tmp = borderRadius.x - borderSize.w;
             vec2 xIntersection = vec2(tmp, tmp / ratio);
             tmp = borderRadius.x - borderSize.x;
             vec2 yIntersection = vec2(tmp * ratio, tmp);
             vec2 lineIntersection = min(xIntersection, yIntersection);
-  
+
             insideBorder.yz = vec2(0.0);
             insideBorder.xw = max(vec2(0.0), lineIntersection - v_borderDistance.xw);
-  
+
         } else if(all(lessThan(v_outsideDistance.xy, borderRadius.yy))) {
             distance = radiusDistance(borderRadius.y, v_outsideDistance.xy, v_borderDistance.xy, borderSize.xy);
-  
+
             float tmp = borderRadius.y - borderSize.y;
             vec2 xIntersection = vec2(tmp, tmp / ratio);
             tmp = borderRadius.y - borderSize.x;
             vec2 yIntersection = vec2(tmp * ratio, tmp);
             vec2 lineIntersection = min(xIntersection, yIntersection);
-  
+
             insideBorder.zw = vec2(0.0);
             insideBorder.xy = max(vec2(0.0), lineIntersection - v_borderDistance.xy);
-  
+
         } else if(all(lessThan(v_outsideDistance.zy, borderRadius.zz))) {
             distance = radiusDistance(borderRadius.z, v_outsideDistance.zy, v_borderDistance.zy, borderSize.zy);
-  
+
             float tmp = borderRadius.z - borderSize.y;
             vec2 xIntersection = vec2(tmp, tmp / ratio);
             tmp = borderRadius.z - borderSize.z;
             vec2 yIntersection = vec2(tmp * ratio, tmp);
             vec2 lineIntersection = min(xIntersection, yIntersection);
-  
+
             insideBorder.xw = vec2(0.0);
             insideBorder.zy =max(vec2(0.0), lineIntersection - v_borderDistance.zy);
-  
+
         } else if(all(lessThan(v_outsideDistance.zw, borderRadius.ww))) {
             distance = radiusDistance(borderRadius.w, v_outsideDistance.zw, v_borderDistance.zw, borderSize.zw);
-  
+
             float tmp = borderRadius.w - borderSize.w;
             vec2 xIntersection = vec2(tmp, tmp / ratio);
             tmp = borderRadius.w - borderSize.z;
             vec2 yIntersection = vec2(tmp * ratio, tmp);
             vec2 lineIntersection = min(xIntersection, yIntersection);
-  
+
             insideBorder.xy = vec2(0.0);
             insideBorder.zw = max(vec2(0.0), lineIntersection - v_borderDistance.zw);
-  
+
         }
-  
+
         if(insideBorder.x + insideBorder.y + insideBorder.z + insideBorder.w > 0.0) {
           borderWeight = normalize(insideBorder);
         }
-  
+
         #include <clipping_planes_fragment>`,
   )
 }
@@ -464,7 +489,7 @@ function getFargmentOpacityCode(instanced: boolean, existingOpacity: string | un
 
   borderOpacity = min(backgroundOpacity + data[3].x, 1.0);
   borderColor = mix(backgroundColor, data[2].xyz, data[3].x / borderOpacity);
-        
+
 
   float outOpacity = ${
     instanced ? 'clipOpacity * ' : ''

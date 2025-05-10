@@ -6,11 +6,12 @@ import { Parent, bindHandlers } from './utils.js'
 import { readReactive } from '../utils.js'
 import { FontFamilies } from '../text/index.js'
 import { ThreeEventMap } from '../events.js'
+import { DeepSignal, deepSignal } from 'deepsignal/core'
 
 export class Root<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Parent<T> {
   protected readonly styleSignal: Signal<RootProperties<EM> | undefined> = signal(undefined)
-  private readonly propertiesSignal: Signal<RootProperties<EM> | undefined>
-  private readonly defaultPropertiesSignal: Signal<AllOptionalProperties | undefined>
+  private readonly propertiesSignal: DeepSignal<RootProperties<EM>>
+  private readonly defaultPropertiesSignal: DeepSignal<AllOptionalProperties>
   private readonly unsubscribe: () => void
   private readonly onFrameSet = new Set<(delta: number) => void>()
   private readonly fontFamiliesSignal: Signal<FontFamilies | undefined>
@@ -30,8 +31,8 @@ export class Root<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Pare
     this.pixelSizeSignal = signal(properties?.pixelSize ?? DEFAULT_PIXEL_SIZE)
     this.matrixAutoUpdate = false
     this.fontFamiliesSignal = signal<FontFamilies | undefined>(fontFamilies)
-    this.propertiesSignal = signal(properties)
-    this.defaultPropertiesSignal = signal(defaultProperties)
+    this.propertiesSignal = deepSignal(properties ?? {})
+    this.defaultPropertiesSignal = deepSignal(defaultProperties ?? {})
     this.unsubscribe = effect(() => {
       let getCamera: () => Camera
       if (typeof camera === 'function') {
@@ -90,7 +91,8 @@ export class Root<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Pare
   }
 
   getComputedProperty<K extends keyof RootProperties<EM>>(key: K): RootProperties<EM>[K] | undefined {
-    return untracked(() => this.internals.mergedProperties?.value.read(key as string, undefined))
+    // @ts-expect-error
+    return untracked(() => this.internals.mergedPropeties[key])
   }
 
   getStyle(): undefined | Readonly<RootProperties<EM>> {
@@ -103,11 +105,11 @@ export class Root<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Pare
 
   setProperties(properties: (RootProperties<EM> & WithReactive<{ pixelSize?: number }>) | undefined) {
     this.pixelSizeSignal.value = properties?.pixelSize ?? DEFAULT_PIXEL_SIZE
-    this.propertiesSignal.value = properties
+    Object.assign(this.propertiesSignal, properties)
   }
 
   setDefaultProperties(properties: AllOptionalProperties) {
-    this.defaultPropertiesSignal.value = properties
+    Object.assign(this.defaultPropertiesSignal, properties)
   }
 
   destroy() {

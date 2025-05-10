@@ -1,6 +1,7 @@
 import { ReadonlySignal, computed, signal } from '@preact/signals-core'
 import { ColorRepresentation, createConditionalPropertyTranslator } from './utils.js'
 import { PropertyTransformers } from './properties/merged.js'
+import { DeepSignal } from 'deepsignal/core'
 
 export type WithPreferredColorScheme<T> = { dark?: T } & T
 
@@ -35,6 +36,10 @@ export function getPreferredColorScheme() {
 
 export const darkPropertyTransformers: PropertyTransformers = {
   dark: createConditionalPropertyTranslator(() => isDarkMode.value),
+}
+
+export const darkStuff = (props: DeepSignal<WithPreferredColorScheme<any>>, key: string) => {
+  return computed(() => (isDarkMode.value ? (props.$dark?.peek() != null ? props.dark[key] : undefined) : undefined))
 }
 
 export function basedOnPreferredColorScheme<const T extends { [Key in string]: ColorRepresentation }>({

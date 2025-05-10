@@ -13,7 +13,7 @@ const helperMatrix2 = new Matrix4()
 
 export type InstancedTextProperties = TextAlignProperties &
   TextAppearanceProperties &
-  Omit<GlyphLayoutProperties, 'text' | 'font'> &
+  Partial<Omit<GlyphLayoutProperties, 'text' | 'font'>> &
   FontFamilyProperties
 
 export function computedGylphGroupDependencies(fontSignal: Signal<Font | undefined>) {

@@ -1,14 +1,15 @@
 import { YogaProperties, createFlexNodeState } from '../flex/node.js'
-import { createHoverPropertyTransformers, setupCursorCleanup } from '../hover.js'
+import { createHoveredStuff, createHoverPropertyTransformers, setupCursorCleanup } from '../hover.js'
 import { computedIsClipped } from '../clipping.js'
+import { DeepSignal } from 'deepsignal/core'
 import { ScrollbarProperties } from '../scroll.js'
 import { WithAllAliases } from '../properties/alias.js'
 import { PanelProperties, setupInstancedPanel } from '../panel/instanced-panel.js'
 import { TransformProperties, setupObjectTransform, computedTransformMatrix } from '../transform.js'
 import { AllOptionalProperties, WithClasses, WithReactive } from '../properties/default.js'
-import { createResponsivePropertyTransformers } from '../responsive.js'
+import { createResponsivePropertyStuff, createResponsivePropertyTransformers } from '../responsive.js'
 import { computedOrderInfo, ElementType, ZIndexProperties } from '../order.js'
-import { createActivePropertyTransfomers } from '../active.js'
+import { createActivePropertyTransfomers, createActiveStuff } from '../active.js'
 import { Signal, signal } from '@preact/signals-core'
 import {
   VisibilityProperties,
@@ -20,6 +21,7 @@ import {
   setupNode,
   setupPointerEvents,
   setupMatrixWorldUpdate,
+  mergeProps,
 } from './utils.js'
 import { Listeners, setupLayoutListeners, setupClippedListeners } from '../listeners.js'
 import { ParentContext } from '../context.js'
@@ -37,7 +39,7 @@ import {
   computedGylphGroupDependencies,
   createInstancedText,
 } from '../text/index.js'
-import { darkPropertyTransformers } from '../dark.js'
+import { darkPropertyTransformers, darkStuff } from '../dark.js'
 import {
   abortableEffect,
   computedAncestorsHaveListeners,
@@ -76,19 +78,25 @@ export function createTextState<EM extends ThreeEventMap = ThreeEventMap>(
   textSignal: Signal<unknown | Signal<unknown> | Array<unknown | Signal<unknown>>>,
   fontFamilies: Signal<FontFamilies | undefined> | undefined,
   style: Signal<TextProperties<EM> | undefined>,
-  properties: Signal<TextProperties<EM> | undefined>,
-  defaultProperties: Signal<AllOptionalProperties | undefined>,
+  properties: DeepSignal<TextProperties<EM>>,
+  defaultProperties: DeepSignal<AllOptionalProperties>,
 ) {
   const flexState = createFlexNodeState()
   const hoveredSignal = signal<Array<number>>([])
   const activeSignal = signal<Array<number>>([])
 
-  const mergedProperties = computedMergedProperties(style, properties, defaultProperties, {
-    ...darkPropertyTransformers,
-    ...createResponsivePropertyTransformers(parentCtx.root.size),
-    ...createHoverPropertyTransformers(hoveredSignal),
-    ...createActivePropertyTransfomers(activeSignal),
-  })
+  // const mergedProperties = computedMergedProperties(style, properties, defaultProperties, {
+  //   ...darkPropertyTransformers,
+  //   ...createResponsivePropertyTransformers(parentCtx.root.size),
+  //   ...createHoverPropertyTransformers(hoveredSignal),
+  //   ...createActivePropertyTransfomers(activeSignal),
+  // })
+  const mergedProperties = mergeProps<TextProperties<EM>>(properties, defaultProperties, [
+    [0, darkStuff],
+    [10, createResponsivePropertyStuff(flexState.size)],
+    [20, createHoveredStuff(hoveredSignal)],
+    [30, createActiveStuff(activeSignal)],
+  ])
 
   const transformMatrix = computedTransformMatrix(mergedProperties, flexState, parentCtx.root.pixelSize)
   const globalMatrix = computedGlobalMatrix(parentCtx.childrenMatrix, transformMatrix)
@@ -149,7 +157,7 @@ export function setupText<EM extends ThreeEventMap = ThreeEventMap>(
   state: ReturnType<typeof createTextState>,
   parentCtx: ParentContext,
   style: Signal<TextProperties<EM> | undefined>,
-  properties: Signal<TextProperties<EM> | undefined>,
+  properties: DeepSignal<TextProperties<EM>>,
   object: Object3D,
   abortSignal: AbortSignal,
 ) {

@@ -52,6 +52,7 @@ export const Fullscreen: (props: FullscreenProperties & RefAttributes<Fullscreen
     )
     return createPortal(
       <group position-z={-distanceToCamera}>
+        {/* @ts-expect-error */}
         <Root ref={ref} {...properties} sizeX={sizeX} sizeY={sizeY} pixelSize={pixelSize}>
           {properties.children}
         </Root>

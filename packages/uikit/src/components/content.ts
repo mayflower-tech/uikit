@@ -1,15 +1,16 @@
 import { FlexNodeState, YogaProperties, createFlexNodeState } from '../flex/node.js'
-import { createHoverPropertyTransformers, setupCursorCleanup } from '../hover.js'
+import { createHoveredStuff, createHoverPropertyTransformers, setupCursorCleanup } from '../hover.js'
 import { computedIsClipped, createGlobalClippingPlanes, ClippingRect } from '../clipping.js'
 import { ScrollbarProperties } from '../scroll.js'
 import { WithAllAliases } from '../properties/alias.js'
 import { PanelProperties, setupInstancedPanel } from '../panel/instanced-panel.js'
 import { TransformProperties, setupObjectTransform, computedTransformMatrix } from '../transform.js'
 import { AllOptionalProperties, WithClasses, WithReactive } from '../properties/default.js'
-import { createResponsivePropertyTransformers } from '../responsive.js'
+import { createResponsivePropertyStuff, createResponsivePropertyTransformers } from '../responsive.js'
 import { ElementType, OrderInfo, ZIndexProperties, computedOrderInfo, setupRenderOrder } from '../order.js'
-import { createActivePropertyTransfomers } from '../active.js'
+import { createActivePropertyTransfomers, createActiveStuff } from '../active.js'
 import { Signal, computed, signal, untracked } from '@preact/signals-core'
+import { DeepSignal } from 'deepsignal/core'
 import {
   VisibilityProperties,
   WithConditionals,
@@ -22,6 +23,8 @@ import {
   setupMatrixWorldUpdate,
   setupPointerEvents,
   computedAncestorsHaveListeners,
+  ReadonlyDeepSignalObject,
+  mergeProps,
 } from './utils.js'
 import { abortableEffect, alignmentZMap } from '../utils.js'
 import { Listeners, setupLayoutListeners, setupClippedListeners } from '../listeners.js'
@@ -33,9 +36,9 @@ import {
 } from '../panel/instanced-panel-group.js'
 import { createInteractionPanel, setupInteractionPanel } from '../panel/instanced-panel-mesh.js'
 import { Box3, Material, Mesh, Object3D, Vector3 } from 'three'
-import { darkPropertyTransformers } from '../dark.js'
+import { darkPropertyTransformers, darkStuff } from '../dark.js'
 import { getDefaultPanelMaterialConfig, makeClippedCast, PointerEventsProperties } from '../panel/index.js'
-import { MergedProperties, computedInheritableProperty } from '../properties/index.js'
+import { computedInheritableProperty } from '../properties/index.js'
 import { KeepAspectRatioProperties } from './image.js'
 import { EventHandlers, ThreeEventMap } from '../events.js'
 
@@ -70,8 +73,8 @@ export type ContentProperties<EM extends ThreeEventMap = ThreeEventMap> = Inheri
 export function createContentState<EM extends ThreeEventMap = ThreeEventMap>(
   parentCtx: ParentContext,
   style: Signal<ContentProperties<EM> | undefined>,
-  properties: Signal<ContentProperties<EM> | undefined>,
-  defaultProperties: Signal<AllOptionalProperties | undefined>,
+  properties: DeepSignal<ContentProperties<EM>>,
+  defaultProperties: DeepSignal<AllOptionalProperties>,
   contentContainerRef: { current?: Object3D | null },
 ) {
   const flexState = createFlexNodeState()
@@ -82,19 +85,26 @@ export function createContentState<EM extends ThreeEventMap = ThreeEventMap>(
   const aspectRatio = computed(() => sizeSignal.value.x / sizeSignal.value.y)
 
   //properties
-  const mergedProperties = computedMergedProperties(
-    style,
-    properties,
-    defaultProperties,
-    {
-      ...darkPropertyTransformers,
-      ...createResponsivePropertyTransformers(parentCtx.root.size),
-      ...createHoverPropertyTransformers(hoveredList),
-      ...createActivePropertyTransfomers(pressedList),
-    },
-    keepAspectRatioPropertyTransformer,
-    (m) => m.add('aspectRatio', aspectRatio),
-  )
+  // const omergedProperties = computedMergedProperties(
+  //   style,
+  //   properties,
+  //   defaultProperties,
+  //   {
+  //     ...darkPropertyTransformers,
+  //     ...createResponsivePropertyTransformers(parentCtx.root.size),
+  //     ...createHoverPropertyTransformers(hoveredList),
+  //     ...createActivePropertyTransfomers(pressedList),
+  //   },
+  //   keepAspectRatioPropertyTransformer,
+  //   (m) => m.add('aspectRatio', aspectRatio),
+  // )
+
+  const mergedProperties = mergeProps<ContentProperties<EM>>(properties, defaultProperties, [
+    [0, darkStuff],
+    [10, createResponsivePropertyStuff(parentCtx.root.size)],
+    [20, createHoveredStuff(hoveredList)],
+    [30, createActiveStuff(hoveredList)],
+  ])
 
   const transformMatrix = computedTransformMatrix(mergedProperties, flexState, parentCtx.root.pixelSize)
 
@@ -163,7 +173,7 @@ export function setupContent<EM extends ThreeEventMap = ThreeEventMap>(
   state: ReturnType<typeof createContentState>,
   parentCtx: ParentContext,
   style: Signal<ContentProperties<EM> | undefined>,
-  properties: Signal<ContentProperties<EM> | undefined>,
+  properties: ReadonlyDeepSignalObject<ContentProperties<EM>>,
   object: Object3D,
   contentContainer: Object3D,
   abortSignal: AbortSignal,
@@ -220,7 +230,7 @@ function setupContentContainer(
   measureContent: () => void,
   measuredSize: Vector3,
   measuredCenter: Vector3,
-  propertiesSignal: Signal<MergedProperties>,
+  propertiesSignal: ReadonlyDeepSignalObject<ContentProperties>,
   root: RootContext,
   flexState: FlexNodeState,
   isVisible: Signal<boolean>,
@@ -231,13 +241,12 @@ function setupContentContainer(
   const depthAlign = computedInheritableProperty(propertiesSignal, 'depthAlign', defaultDepthAlign)
   const keepAspectRatio = computedInheritableProperty(propertiesSignal, 'keepAspectRatio', true)
   abortableEffect(() => {
-    const properties = propertiesSignal.value
     updateRenderProperties(
       { current: contentContainer },
       isVisible.value,
-      properties.read('renderOrder', 0),
-      properties.read('depthTest', true),
-      properties.read('depthWrite', false),
+      propertiesSignal.renderOrder ?? 0,
+      propertiesSignal.depthTest ?? true,
+      propertiesSignal.depthWrite ?? false,
     )
     root.requestRender()
   }, abortSignal)
@@ -294,7 +303,7 @@ function createMeasureContent(
   flexState: FlexNodeState,
   measuredSize: Vector3,
   measuredCenter: Vector3,
-  propertiesSignal: Signal<MergedProperties>,
+  propertiesSignal: ReadonlyDeepSignalObject<ContentProperties>,
   root: RootContext,
   parentClippingRect: Signal<ClippingRect | undefined>,
   isVisible: Signal<boolean>,
@@ -337,13 +346,12 @@ function createMeasureContent(
     root.requestRender()
   }
   return () => {
-    const properties = propertiesSignal.peek()
     updateRenderProperties(
       contentContainerRef,
       isVisible.peek(),
-      untracked(() => properties.read('renderOrder', 0)),
-      untracked(() => properties.read('depthTest', true)),
-      untracked(() => properties.read('depthWrite', false)),
+      untracked(() => propertiesSignal.renderOrder ?? 0),
+      untracked(() => propertiesSignal.depthTest ?? true),
+      untracked(() => propertiesSignal.depthWrite ?? false),
     )
     measureContent()
   }

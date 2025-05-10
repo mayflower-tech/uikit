@@ -6,7 +6,7 @@ import { MeasureFunction, MeasureMode } from 'yoga-layout/load'
 import { MergedProperties } from '../properties/merged.js'
 import { readReactive } from '../utils.js'
 import { computedInheritableProperty } from '../properties/index.js'
-import { CustomLayouting } from '../internals.js'
+import { CustomLayouting, ReadonlyDeepSignalObject } from '../internals.js'
 
 export type GlyphLayoutLine = {
   charIndexOffset: number
@@ -34,7 +34,7 @@ export type GlyphLayoutProperties = {
 }
 
 export function computedCustomLayouting(
-  properties: Signal<MergedProperties>,
+  properties: ReadonlyDeepSignalObject<GlyphProperties>,
   fontSignal: Signal<Font | undefined>,
   textSignal: Signal<unknown | Signal<unknown> | Array<Signal<unknown> | unknown>>,
   propertiesRef: { current: GlyphLayoutProperties | undefined },
@@ -42,7 +42,7 @@ export function computedCustomLayouting(
 ) {
   const fontSize = computedInheritableProperty(properties, 'fontSize', 16)
   const letterSpacing = computedInheritableProperty(properties, 'letterSpacing', 0)
-  const lineHeight = computedInheritableProperty<number | `${number}%`>(properties, 'lineHeight', '120%')
+  const lineHeight = computedInheritableProperty<number | `${number}%`, 'lineHeight'>(properties, 'lineHeight', '120%')
   const wordBreak = computedInheritableProperty(properties, 'wordBreak', defaultWordBreak)
   return computed<CustomLayouting | undefined>(() => {
     const font = fontSignal.value

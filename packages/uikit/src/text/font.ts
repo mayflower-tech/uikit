@@ -5,6 +5,7 @@ import { loadCachedFont } from './cache.js'
 import { computedInheritableProperty } from '../properties/index.js'
 import { inter } from '@pmndrs/msdfonts'
 import { abortableEffect } from '../utils.js'
+import { ReadonlyDeepSignalObject } from '../internals.js'
 
 export type FontFamilyWeightMap = Partial<Record<FontWeight, string | FontInfo>>
 
@@ -32,13 +33,13 @@ const defaultFontFamilyUrls: FontFamilies = {
 }
 
 export function computedFont(
-  properties: Signal<MergedProperties>,
+  properties: ReadonlyDeepSignalObject<FontFamilyProperties>,
   fontFamiliesSignal: Signal<FontFamilies | undefined> | undefined,
   renderer: WebGLRenderer,
 ): Signal<Font | undefined> {
   const result = signal<Font | undefined>(undefined)
-  const fontFamily = computedInheritableProperty<string | undefined>(properties, 'fontFamily', undefined)
-  const fontWeight = computedInheritableProperty<FontWeight>(properties, 'fontWeight', 'normal')
+  const fontFamily = computedInheritableProperty<string | undefined, 'fontFamily'>(properties, 'fontFamily', undefined)
+  const fontWeight = computedInheritableProperty<FontWeight, 'fontWeight'>(properties, 'fontWeight', 'normal')
   effect(() => {
     const fontFamilies = fontFamiliesSignal?.value ?? defaultFontFamilyUrls
     let resolvedFontFamily = fontFamily.value

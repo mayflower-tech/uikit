@@ -1,15 +1,15 @@
 import { AllOptionalProperties } from '../properties/default.js'
 import { Parent, createParentContextSignal, bindHandlers, setupParentContextSignal } from './utils.js'
 import { ReadonlySignal, Signal, effect, signal, untracked } from '@preact/signals-core'
-import { SvgProperties, createSvgState, setupSvg } from '../components/index.js'
-import { MergedProperties } from '../properties/index.js'
+import { DeepSignal, deepSignal } from 'deepsignal/core'
+import { ReadonlyDeepSignalObject, SvgProperties, createSvgState, setupSvg } from '../components/index.js'
 import { ThreeEventMap } from '../events.js'
 
 export class Svg<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Parent<T> {
-  private mergedProperties?: ReadonlySignal<MergedProperties>
+  private mergedProperties?: ReadonlyDeepSignalObject<SvgProperties<EM>>
   private readonly styleSignal: Signal<SvgProperties<EM> | undefined> = signal(undefined)
-  private readonly propertiesSignal: Signal<SvgProperties<EM> | undefined>
-  private readonly defaultPropertiesSignal: Signal<AllOptionalProperties | undefined>
+  private readonly propertiesSignal: DeepSignal<SvgProperties<EM>>
+  private readonly defaultPropertiesSignal: DeepSignal<AllOptionalProperties>
   private readonly parentContextSignal = createParentContextSignal()
   private readonly unsubscribe: () => void
 
@@ -19,8 +19,8 @@ export class Svg<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Paren
     super()
     this.matrixAutoUpdate = false
     setupParentContextSignal(this.parentContextSignal, this)
-    this.propertiesSignal = signal(properties)
-    this.defaultPropertiesSignal = signal(defaultProperties)
+    this.propertiesSignal = deepSignal(properties ?? {})
+    this.defaultPropertiesSignal = deepSignal(defaultProperties ?? {})
 
     this.unsubscribe = effect(() => {
       const parentContext = this.parentContextSignal.value?.value
@@ -60,7 +60,8 @@ export class Svg<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Paren
   }
 
   getComputedProperty<K extends keyof SvgProperties<EM>>(key: K): SvgProperties<EM>[K] | undefined {
-    return untracked(() => this.mergedProperties?.value.read(key as string, undefined))
+    // @ts-expect-error
+    return untracked(() => this.internals.mergedProperties[key])
   }
 
   getStyle(): undefined | Readonly<SvgProperties<EM>> {
@@ -72,11 +73,11 @@ export class Svg<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Paren
   }
 
   setProperties(properties: SvgProperties<EM> | undefined) {
-    this.propertiesSignal.value = properties
+    Object.assign(this.propertiesSignal, properties)
   }
 
   setDefaultProperties(properties: AllOptionalProperties) {
-    this.defaultPropertiesSignal.value = properties
+    Object.assign(this.defaultPropertiesSignal, properties)
   }
 
   destroy() {

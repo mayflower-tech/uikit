@@ -3,11 +3,12 @@ import { AllOptionalProperties } from '../properties/default.js'
 import { Parent, createParentContextSignal, setupParentContextSignal, bindHandlers } from './utils.js'
 import { Signal, effect, signal, untracked } from '@preact/signals-core'
 import { ThreeEventMap } from '../events.js'
+import { DeepSignal, deepSignal } from 'deepsignal/core'
 
 export class Image<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Parent<T> {
   private readonly styleSignal: Signal<ImageProperties<EM> | undefined> = signal(undefined)
-  private readonly propertiesSignal: Signal<ImageProperties<EM> | undefined>
-  private readonly defaultPropertiesSignal: Signal<AllOptionalProperties | undefined>
+  private readonly propertiesSignal: DeepSignal<ImageProperties<EM>>
+  private readonly defaultPropertiesSignal: DeepSignal<AllOptionalProperties>
   protected readonly parentContextSignal = createParentContextSignal()
   private readonly unsubscribe: () => void
 
@@ -17,8 +18,8 @@ export class Image<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Par
     super()
     setupParentContextSignal(this.parentContextSignal, this)
     this.matrixAutoUpdate = false
-    this.propertiesSignal = signal(properties)
-    this.defaultPropertiesSignal = signal(defaultProperties)
+    this.propertiesSignal = deepSignal(properties ?? {})
+    this.defaultPropertiesSignal = deepSignal(defaultProperties ?? {})
 
     this.unsubscribe = effect(() => {
       const parentContext = this.parentContextSignal.value?.value
@@ -53,7 +54,8 @@ export class Image<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Par
   }
 
   getComputedProperty<K extends keyof ImageProperties<EM>>(key: K): ImageProperties<EM>[K] | undefined {
-    return untracked(() => this.internals.mergedProperties?.value.read(key as string, undefined))
+    // @ts-expect-error
+    return untracked(() => this.internals.mergedPropeties[key])
   }
 
   getStyle(): undefined | Readonly<ImageProperties<EM>> {
@@ -65,11 +67,11 @@ export class Image<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Par
   }
 
   setProperties(properties: ImageProperties<EM> | undefined) {
-    this.propertiesSignal.value = properties
+    Object.assign(this.propertiesSignal, properties)
   }
 
   setDefaultProperties(properties: AllOptionalProperties) {
-    this.defaultPropertiesSignal.value = properties
+    Object.assign(this.defaultPropertiesSignal, properties)
   }
 
   destroy() {

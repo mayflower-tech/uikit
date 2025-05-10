@@ -44,6 +44,7 @@ export const Container: (props: ContainerProperties & RefAttributes<ContainerRef
       }
       const abortController = new AbortController()
       setupContainer<R3FEventMap>(
+        // @ts-expect-error
         internals,
         parent,
         propertySignals.style,
@@ -55,12 +56,14 @@ export const Container: (props: ContainerProperties & RefAttributes<ContainerRef
       return () => abortController.abort()
     }, [parent, propertySignals, internals])
 
+    // @ts-expect-error
     useComponentInternals(ref, parent.root, propertySignals.style, internals, internals.interactionPanel)
 
     return (
       <AddHandlers handlers={internals.handlers} ref={outerRef}>
         <primitive object={internals.interactionPanel} />
         <object3D matrixAutoUpdate={false} ref={innerRef}>
+          {/* @ts-expect-error */}
           <DefaultProperties {...internals.defaultProperties}>
             <ParentProvider value={internals}>{properties.children}</ParentProvider>
           </DefaultProperties>

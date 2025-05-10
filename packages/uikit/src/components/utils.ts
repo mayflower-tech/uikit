@@ -1,4 +1,4 @@
-import { ReadonlySignal, Signal, computed, effect } from '@preact/signals-core'
+import { ReadonlySignal, Signal, computed, effect, signal } from '@preact/signals-core'
 import { BufferGeometry, Color, Material, Matrix4, Mesh, MeshBasicMaterial, Object3D } from 'three'
 import { WithActive, addActiveHandlers } from '../active.js'
 import { WithPreferredColorScheme } from '../dark.js'
@@ -15,7 +15,8 @@ import {
   PropertyTransformers,
   computedInheritableProperty,
 } from '../properties/index.js'
-import { AllowedPointerEventsType, PointerEventsProperties } from '../internals.js'
+import { AllowedPointerEventsType, PointerEventsProperties, YogaProperties } from '../internals.js'
+import { DeepSignal } from 'deepsignal/core'
 
 export function disposeGroup(object: Object3D | undefined) {
   object?.traverse((mesh) => {
@@ -54,13 +55,13 @@ export type VisibilityProperties = {
 export function computedIsVisible(
   flexState: FlexNodeState,
   isClipped: Signal<boolean> | undefined,
-  mergedProperties: Signal<MergedProperties>,
+  mergedProperties: DeepSignal<VisibilityProperties>,
 ) {
   return computed(
     () =>
       flexState.displayed.value &&
       (isClipped == null || !isClipped?.value) &&
-      mergedProperties.value.read<VisibilityProperties['visibility']>('visibility', 'visible') === 'visible',
+      (mergedProperties.visibility ?? 'visible') === 'visible',
   )
 }
 
@@ -101,7 +102,7 @@ export function setupNode(
   state: FlexNodeState & {
     root: RootContext
     node: Signal<FlexNode | undefined>
-    mergedProperties: Signal<MergedProperties>
+    mergedProperties: ReadonlyDeepSignalObject<YogaProperties>
   },
   parentContext: ParentContext | undefined,
   object: Object3D,
@@ -151,8 +152,8 @@ const eventHandlerKeys: Array<keyof EventHandlers> = [
 
 export function computedHandlers(
   style: Signal<Properties | undefined>,
-  propertiesSignal: Signal<Properties | undefined>,
-  defaultProperties: Signal<AllOptionalProperties | undefined>,
+  propertiesSignal: DeepSignal<Properties>,
+  defaultProperties: DeepSignal<AllOptionalProperties>,
   hoveredSignal: Signal<Array<number>>,
   activeSignal: Signal<Array<number>>,
   dynamicHandlers?: Signal<EventHandlers | undefined>,
@@ -160,25 +161,17 @@ export function computedHandlers(
 ) {
   return computed(() => {
     const handlers: EventHandlers = {}
-    const properties = propertiesSignal.value
-    if (properties != null) {
+    if (propertiesSignal != null) {
       for (const key of eventHandlerKeys) {
-        const handler = properties[key]
+        const handler = propertiesSignal[key]
         if (handler != null) {
           handlers[key] = handler as any
         }
       }
     }
     addHandlers(handlers, dynamicHandlers?.value)
-    addHoverHandlers(
-      handlers,
-      style.value,
-      propertiesSignal.value,
-      defaultProperties.value,
-      hoveredSignal,
-      defaultCursor,
-    )
-    addActiveHandlers(handlers, style.value, propertiesSignal.value, defaultProperties.value, activeSignal)
+    addHoverHandlers(handlers, style.value, propertiesSignal, defaultProperties, hoveredSignal, defaultCursor)
+    addActiveHandlers(handlers, style.value, propertiesSignal, defaultProperties, activeSignal)
     return handlers
   })
 }
@@ -222,8 +215,8 @@ export function addHandler<T extends { [Key in string]?: (e: any) => void }, K e
 
 export function computedMergedProperties(
   style: Signal<Properties | undefined>,
-  properties: Signal<Properties | undefined>,
-  defaultProperties: Signal<AllOptionalProperties | undefined>,
+  properties: DeepSignal<Properties>,
+  defaultProperties: DeepSignal<AllOptionalProperties>,
   postTransformers: PropertyTransformers,
   preTransformers?: PropertyTransformers,
   onInit?: (merged: MergedProperties) => void,
@@ -231,9 +224,100 @@ export function computedMergedProperties(
   return computed(() => {
     const merged = new MergedProperties(preTransformers)
     onInit?.(merged)
-    merged.addAll(style.value, properties.value, defaultProperties.value, postTransformers)
+    // @ts-expect-error
+    merged.addAll(style.value, properties, defaultProperties.value, postTransformers)
     return merged
   })
+}
+
+declare type ArrayType<T> = T extends Array<infer I> ? I : T
+
+// prettier-ignore
+/** @ts-expect-error **/
+interface ReadonlyDeepArray<T> extends ReadonlyArray<T> {
+    map: <U>(callbackfn: (value: ReadonlyDeepSignal<T>, index: number, array: ReadonlyDeepSignalArray<T[]>) => U, thisArg?: any) => U[];
+    forEach: (callbackfn: (value: ReadonlyDeepSignal<T>, index: number, array: ReadonlyDeepSignalArray<T[]>) => void, thisArg?: any) => void;
+    concat(...items: ConcatArray<T>[]): ReadonlyDeepSignalArray<T[]>;
+    concat(...items: (T | ConcatArray<T>)[]): ReadonlyDeepSignalArray<T[]>;
+    reverse(): ReadonlyDeepSignalArray<T[]>;
+    shift(): ReadonlyDeepSignal<T> | undefined;
+    slice(start?: number, end?: number): ReadonlyDeepSignalArray<T[]>;
+    splice(start: number, deleteCount?: number): ReadonlyDeepSignalArray<T[]>;
+    splice(start: number, deleteCount: number, ...items: T[]): ReadonlyDeepSignalArray<T[]>;
+    filter<S extends T>(predicate: (value: ReadonlyDeepSignal<T>, index: number, array: ReadonlyDeepSignalArray<T[]>) => value is ReadonlyDeepSignal<S>, thisArg?: any): ReadonlyDeepSignalArray<S[]>;
+    filter(predicate: (value: ReadonlyDeepSignal<T>, index: number, array: ReadonlyDeepSignalArray<T[]>) => unknown, thisArg?: any): ReadonlyDeepSignalArray<T[]>;
+    reduce(callbackfn: (previousValue: ReadonlyDeepSignal<T>, currentValue: ReadonlyDeepSignal<T>, currentIndex: number, array: ReadonlyDeepSignalArray<T[]>) => T): ReadonlyDeepSignal<T>;
+    reduce(callbackfn: (previousValue: ReadonlyDeepSignal<T>, currentValue: ReadonlyDeepSignal<T>, currentIndex: number, array: ReadonlyDeepSignalArray<T[]>) => ReadonlyDeepSignal<T>, initialValue: T): ReadonlyDeepSignal<T>;
+    reduce<U>(callbackfn: (previousValue: U, currentValue: ReadonlyDeepSignal<T>, currentIndex: number, array: ReadonlyDeepSignalArray<T[]>) => U, initialValue: U): U;
+    reduceRight(callbackfn: (previousValue: ReadonlyDeepSignal<T>, currentValue: ReadonlyDeepSignal<T>, currentIndex: number, array: ReadonlyDeepSignalArray<T[]>) => T): ReadonlyDeepSignal<T>;
+    reduceRight(callbackfn: (previousValue: ReadonlyDeepSignal<T>, currentValue: ReadonlyDeepSignal<T>, currentIndex: number, array: ReadonlyDeepSignalArray<T[]>) => ReadonlyDeepSignal<T>, initialValue: T): ReadonlyDeepSignal<T>;
+    reduceRight<U>(callbackfn: (previousValue: U, currentValue: ReadonlyDeepSignal<T>, currentIndex: number, array: ReadonlyDeepSignalArray<T[]>) => U, initialValue: U): U;
+}
+
+declare type ReadonlyDeepSignalArray<T> = ReadonlyDeepArray<ArrayType<T>> & {
+  [key: number]: ReadonlyDeepSignal<ArrayType<T>>
+  $?: {
+    [key: number]: ReadonlySignal<ArrayType<T>>
+  }
+  $length?: ReadonlySignal<number>
+}
+
+declare const isShallow: unique symbol
+
+export type ReadonlyDeepSignal<T> = T extends Function
+  ? T
+  : T extends {
+        [isShallow]: true
+      }
+    ? T
+    : T extends Array<unknown>
+      ? ReadonlyDeepSignalArray<T>
+      : T extends object
+        ? ReadonlyDeepSignalObject<T>
+        : T
+
+export type ReadonlyDeepSignalObject<T extends object> = {
+  [P in keyof T & string as `$${P}`]?: T[P] extends Function ? never : ReadonlySignal<T[P]>
+} & {
+  [P in keyof T]: DeepSignal<T[P]>
+}
+
+export function mergeProps<T extends object>(
+  properties: DeepSignal<T>,
+  defaultProperties: DeepSignal<AllOptionalProperties>,
+  stuff: Array<
+    [priority: number, lookup: (p: DeepSignal<T> | DeepSignal<AllOptionalProperties>, k: string) => unknown]
+  >,
+): ReadonlyDeepSignalObject<T> {
+  const sortedStuff = [...stuff].sort(([prioA], [prioB]) => prioA - prioB)
+  const proxy = new Proxy(properties, {
+    get(target, fullKey, receiver) {
+      const key = fullKey as string
+      for (const [_prio, lookup] of sortedStuff) {
+        const value = lookup(properties, key)
+        if (value !== undefined) {
+          return value
+        }
+        const defaultValue = lookup(defaultProperties, key)
+        if (defaultValue !== undefined) {
+          return defaultValue
+        }
+      }
+      if (key in target) {
+        return Reflect.get(target, key, receiver)
+      }
+      if (key in defaultProperties) {
+        return Reflect.get(defaultProperties, key, receiver)
+      }
+      return undefined
+    },
+    set(target, fullKey, value, receiver) {
+      throw new Error('Cannot set properties on merged properties')
+    },
+  })
+  // @ts-expect-error
+  return proxy
+  // return properties
 }
 
 const colorHelper = new Color()
@@ -242,23 +326,29 @@ const colorHelper = new Color()
  * @requires that each mesh inside the group has its default color stored inside object.userData.color
  */
 export function applyAppearancePropertiesToGroup(
-  propertiesSignal: Signal<MergedProperties>,
+  propertiesSignal: ReadonlyDeepSignalObject<{
+    color?: ColorRepresentation
+    opacity?: number
+    depthTest?: boolean
+    depthWrite?: boolean
+    renderOrder?: number
+  }>,
   group: Signal<Object3D | undefined> | Object3D,
   abortSignal: AbortSignal,
 ) {
   abortableEffect(() => {
-    const properties = propertiesSignal.value
-    const color = properties.read<ColorRepresentation | undefined>('color', undefined)
+    const color = propertiesSignal.color
     let c: Color | undefined
     if (Array.isArray(color)) {
+      // @ts-expect-error
       c = colorHelper.setRGB(...color)
     } else if (color != null) {
       c = colorHelper.set(color)
     }
-    const opacity = properties.read('opacity', 1)
-    const depthTest = properties.read('depthTest', true)
-    const depthWrite = properties.read('depthWrite', false)
-    const renderOrder = properties.read('renderOrder', 0)
+    const opacity = propertiesSignal.opacity ?? 1
+    const depthTest = propertiesSignal.depthTest ?? true
+    const depthWrite = propertiesSignal.depthWrite ?? false
+    const renderOrder = propertiesSignal.renderOrder ?? 0
     readReactive(group)?.traverse((mesh) => {
       if (!(mesh instanceof Mesh)) {
         return
@@ -331,23 +421,37 @@ export function setupMatrixWorldUpdate(
   }, abortSignal)
 }
 
-export function computeDefaultProperties(propertiesSignal: Signal<MergedProperties>) {
+export function computeDefaultProperties(
+  propertiesSignal: ReadonlyDeepSignalObject<
+    PointerEventsProperties & {
+      renderOrder?: number
+      depthTest?: boolean
+      depthWrite?: boolean
+    }
+  >,
+) {
   return {
-    pointerEvents: computedInheritableProperty<PointerEventsProperties['pointerEvents']>(
-      propertiesSignal,
-      'pointerEvents',
-      undefined,
-    ),
-    pointerEventsOrder: computedInheritableProperty<PointerEventsProperties['pointerEventsOrder']>(
-      propertiesSignal,
-      'pointerEventsOrder',
-      undefined,
-    ),
-    pointerEventsType: computedInheritableProperty<PointerEventsProperties['pointerEventsType']>(
-      propertiesSignal,
-      'pointerEventsType',
-      undefined,
-    ),
+    // pointerEvents: computedInheritableProperty<PointerEventsProperties['pointerEvents']>(
+    //   propertiesSignal,
+    //   'pointerEvents',
+    //   undefined,
+    // ),
+    // pointerEventsOrder: computedInheritableProperty<PointerEventsProperties['pointerEventsOrder']>(
+    //   propertiesSignal,
+    //   'pointerEventsOrder',
+    //   undefined,
+    // ),
+    // pointerEventsType: computedInheritableProperty<PointerEventsProperties['pointerEventsType']>(
+    //   propertiesSignal,
+    //   'pointerEventsType',
+    //   undefined,
+    // ),
+    // renderOrder: computedInheritableProperty(propertiesSignal, 'renderOrder', 0),
+    // depthTest: computedInheritableProperty(propertiesSignal, 'depthTest', true),
+    // depthWrite: computedInheritableProperty(propertiesSignal, 'depthWrite', false),
+    pointerEvents: propertiesSignal.$pointerEvents,
+    pointerEventsOrder: propertiesSignal.$pointerEventsOrder,
+    pointerEventsType: propertiesSignal.$pointerEventsType,
     renderOrder: computedInheritableProperty(propertiesSignal, 'renderOrder', 0),
     depthTest: computedInheritableProperty(propertiesSignal, 'depthTest', true),
     depthWrite: computedInheritableProperty(propertiesSignal, 'depthWrite', false),
@@ -364,7 +468,7 @@ export type OutgoingDefaultProperties = {
 }
 
 export function setupPointerEvents(
-  propertiesSignal: Signal<MergedProperties>,
+  propertiesSignal: ReadonlyDeepSignalObject<PointerEventsProperties>,
   ancestorsHaveListeners: ReadonlySignal<boolean>,
   rootContext: RootContext,
   target: Object3D,
@@ -374,25 +478,15 @@ export function setupPointerEvents(
   if (target == null) {
     return
   }
-  const properties = propertiesSignal.value
   target.defaultPointerEvents = 'auto'
   abortableEffect(() => {
     target.ancestorsHaveListeners = ancestorsHaveListeners.value
-    target.pointerEvents = properties.read<PointerEventsProperties['pointerEvents']>('pointerEvents', undefined)
-    target.pointerEventsOrder = properties.read<PointerEventsProperties['pointerEventsOrder']>(
-      'pointerEventsOrder',
-      undefined,
-    )
-    target.pointerEventsType = properties.read<PointerEventsProperties['pointerEventsType']>(
-      'pointerEventsType',
-      undefined,
-    )
+    target.pointerEvents = propertiesSignal.pointerEvents
+    target.pointerEventsOrder = propertiesSignal.pointerEventsOrder
+    target.pointerEventsType = propertiesSignal.pointerEventsType
   }, abortSignal)
   abortableEffect(() => {
-    if (
-      !canHaveNonUikitChildren &&
-      propertiesSignal.value.read<PointerEventsProperties['pointerEvents']>('pointerEvents', undefined) === 'none'
-    ) {
+    if (!canHaveNonUikitChildren && propertiesSignal.pointerEvents === 'none') {
       return
     }
     const descendants = rootContext.interactableDescendants

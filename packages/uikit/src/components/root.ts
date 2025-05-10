@@ -34,19 +34,22 @@ import {
   setupPointerEvents,
   computedAncestorsHaveListeners,
   setupNode,
+  mergeProps,
+  ReadonlyDeepSignalObject,
 } from './utils.js'
 import { computedClippingRect } from '../clipping.js'
 import { ElementType, WithReversePainterSortStableCache, computedOrderInfo } from '../order.js'
 import { Camera, Matrix4, Object3D, Plane, Vector2Tuple, Vector3, WebGLRenderer } from 'three'
 import { GlyphGroupManager } from '../text/render/instanced-glyph-group.js'
-import { createActivePropertyTransfomers } from '../active.js'
-import { createHoverPropertyTransformers, setupCursorCleanup } from '../hover.js'
+import { createActivePropertyTransfomers, createActiveStuff } from '../active.js'
+import { createHoveredStuff, createHoverPropertyTransformers, setupCursorCleanup } from '../hover.js'
 import { createInteractionPanel, setupInteractionPanel } from '../panel/instanced-panel-mesh.js'
-import { createResponsivePropertyTransformers } from '../responsive.js'
-import { darkPropertyTransformers } from '../dark.js'
+import { createResponsivePropertyStuff, createResponsivePropertyTransformers } from '../responsive.js'
+import { darkPropertyTransformers, darkStuff } from '../dark.js'
 import { computedInheritableProperty } from '../properties/index.js'
 import { getDefaultPanelMaterialConfig, PointerEventsProperties } from '../panel/index.js'
 import { EventHandlers, ThreeEventMap } from '../events.js'
+import { DeepSignal } from 'deepsignal/core'
 
 export type InheritableRootProperties = WithClasses<
   WithConditionals<
@@ -83,8 +86,8 @@ export function createRootState<EM extends ThreeEventMap = ThreeEventMap>(
   objectRef: { current?: Object3D | null },
   pixelSize: Signal<number>,
   style: Signal<RootProperties<EM> | undefined>,
-  properties: Signal<RootProperties<EM> | undefined>,
-  defaultProperties: Signal<AllOptionalProperties | undefined>,
+  properties: DeepSignal<RootProperties<EM>>,
+  defaultProperties: DeepSignal<AllOptionalProperties>,
   getCamera: () => Camera,
   renderer: WebGLRenderer,
   onFrameSet: Set<(delta: number) => void>,
@@ -97,21 +100,27 @@ export function createRootState<EM extends ThreeEventMap = ThreeEventMap>(
 
   const flexState = createFlexNodeState()
 
-  const mergedProperties = computedMergedProperties(
-    style,
-    properties,
-    defaultProperties,
-    {
-      ...darkPropertyTransformers,
-      ...createResponsivePropertyTransformers(flexState.size),
-      ...createHoverPropertyTransformers(hoveredSignal),
-      ...createActivePropertyTransfomers(activeSignal),
-    },
-    {
-      ...createSizeTranslator(pixelSize, 'sizeX', 'width'),
-      ...createSizeTranslator(pixelSize, 'sizeY', 'height'),
-    },
-  )
+  // const mergedProperties = computedMergedProperties(
+  //   style,
+  //   properties,
+  //   defaultProperties,
+  //   {
+  //     ...darkPropertyTransformers,
+  //     ...createResponsivePropertyTransformers(flexState.size),
+  //     ...createHoverPropertyTransformers(hoveredSignal),
+  //     ...createActivePropertyTransfomers(activeSignal),
+  //   },
+  //   {
+  //     ...createSizeTranslator(pixelSize, 'sizeX', 'width'),
+  //     ...createSizeTranslator(pixelSize, 'sizeY', 'height'),
+  //   },
+  // )
+  const mergedProperties = mergeProps<RootProperties<EM>>(properties, defaultProperties, [
+    [0, darkStuff],
+    [10, createResponsivePropertyStuff(flexState.size)],
+    [20, createHoveredStuff(hoveredSignal)],
+    [30, createActiveStuff(activeSignal)],
+  ])
 
   const ctx: WithReversePainterSortStableCache &
     Pick<RootContext, 'requestFrame' | 'requestRender' | 'onFrameSet' | 'pixelSize'> = {
@@ -184,7 +193,7 @@ export function createRootState<EM extends ThreeEventMap = ThreeEventMap>(
 export function setupRoot<EM extends ThreeEventMap = ThreeEventMap>(
   state: ReturnType<typeof createRootState>,
   style: Signal<RootProperties<EM> | undefined>,
-  properties: Signal<RootProperties<EM> | undefined>,
+  properties: DeepSignal<RootProperties<EM>>,
   object: Object3D,
   childrenContainer: Object3D,
   abortSignal: AbortSignal,
@@ -317,13 +326,21 @@ const defaultAnchorX: keyof typeof alignmentXMap = 'center'
 const defaultAnchorY: keyof typeof alignmentYMap = 'center'
 
 function computedRootMatrix(
-  propertiesSignal: Signal<MergedProperties>,
+  propertiesSignal: ReadonlyDeepSignalObject<RootProperties>,
   matrix: Signal<Matrix4 | undefined>,
   size: Signal<Vector2Tuple | undefined>,
   pixelSize: Signal<number>,
 ) {
-  const anchorX = computedInheritableProperty(propertiesSignal, 'anchorX', defaultAnchorX)
-  const anchorY = computedInheritableProperty(propertiesSignal, 'anchorY', defaultAnchorY)
+  const anchorX = computedInheritableProperty<keyof typeof alignmentXMap, 'anchorX'>(
+    propertiesSignal,
+    'anchorX',
+    defaultAnchorX,
+  )
+  const anchorY = computedInheritableProperty<keyof typeof alignmentYMap, 'anchorY'>(
+    propertiesSignal,
+    'anchorY',
+    defaultAnchorY,
+  )
   return computed(() => {
     if (size.value == null) {
       return undefined

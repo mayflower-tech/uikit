@@ -41,6 +41,7 @@ export const CustomContainer: (props: CustomContainerProperties & RefAttributes<
       }
       const abortController = new AbortController()
       setupCustomContainer<R3FEventMap>(
+        // @ts-expect-error
         internals,
         parent,
         propertySignals.style,
@@ -52,6 +53,7 @@ export const CustomContainer: (props: CustomContainerProperties & RefAttributes<
       return () => abortController.abort()
     }, [internals, parent, propertySignals])
 
+    // @ts-expect-error
     useComponentInternals(ref, parent.root, propertySignals.style, internals, innerRef)
 
     useEffect(() => {

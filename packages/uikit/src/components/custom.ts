@@ -1,14 +1,14 @@
 import { YogaProperties, createFlexNodeState } from '../flex/node.js'
-import { createHoverPropertyTransformers, setupCursorCleanup } from '../hover.js'
+import { createHoveredStuff, createHoverPropertyTransformers, setupCursorCleanup } from '../hover.js'
 import { computedIsClipped, createGlobalClippingPlanes } from '../clipping.js'
 import { ScrollbarProperties } from '../scroll.js'
 import { WithAllAliases } from '../properties/alias.js'
 import { PanelProperties } from '../panel/instanced-panel.js'
 import { TransformProperties, setupObjectTransform, computedTransformMatrix } from '../transform.js'
 import { AllOptionalProperties, WithClasses, WithReactive } from '../properties/default.js'
-import { createResponsivePropertyTransformers } from '../responsive.js'
+import { createResponsivePropertyStuff, createResponsivePropertyTransformers } from '../responsive.js'
 import { ElementType, ZIndexProperties, computedOrderInfo, setupRenderOrder } from '../order.js'
-import { createActivePropertyTransfomers } from '../active.js'
+import { createActivePropertyTransfomers, createActiveStuff } from '../active.js'
 import { Signal, signal } from '@preact/signals-core'
 import {
   VisibilityProperties,
@@ -21,14 +21,16 @@ import {
   setupMatrixWorldUpdate,
   setupPointerEvents,
   computedAncestorsHaveListeners,
+  mergeProps,
 } from './utils.js'
 import { Listeners, setupLayoutListeners, setupClippedListeners } from '../listeners.js'
 import { ParentContext } from '../context.js'
 import { FrontSide, Material, Mesh, Object3D } from 'three'
-import { darkPropertyTransformers } from '../dark.js'
+import { darkPropertyTransformers, darkStuff } from '../dark.js'
 import { PointerEventsProperties, RenderProperties, ShadowProperties, makeClippedCast } from '../panel/index.js'
 import { EventHandlers, ThreeEventMap } from '../events.js'
 import { abortableEffect } from '../utils.js'
+import { DeepSignal } from 'deepsignal/core'
 
 export type InheritableCustomContainerProperties = WithClasses<
   WithConditionals<
@@ -55,20 +57,26 @@ export type CustomContainerProperties<EM extends ThreeEventMap = ThreeEventMap> 
 export function createCustomContainerState<EM extends ThreeEventMap = ThreeEventMap>(
   parentCtx: ParentContext,
   style: Signal<CustomContainerProperties<EM> | undefined>,
-  properties: Signal<CustomContainerProperties<EM> | undefined>,
-  defaultProperties: Signal<AllOptionalProperties | undefined>,
+  properties: DeepSignal<CustomContainerProperties<EM>>,
+  defaultProperties: DeepSignal<AllOptionalProperties>,
 ) {
   const flexState = createFlexNodeState()
   const hoveredSignal = signal<Array<number>>([])
   const activeSignal = signal<Array<number>>([])
 
   //properties
-  const mergedProperties = computedMergedProperties(style, properties, defaultProperties, {
-    ...darkPropertyTransformers,
-    ...createResponsivePropertyTransformers(parentCtx.root.size),
-    ...createHoverPropertyTransformers(hoveredSignal),
-    ...createActivePropertyTransfomers(activeSignal),
-  })
+  // const mergedProperties = computedMergedProperties(style, properties, defaultProperties, {
+  //   ...darkPropertyTransformers,
+  //   ...createResponsivePropertyTransformers(parentCtx.root.size),
+  //   ...createHoverPropertyTransformers(hoveredSignal),
+  //   ...createActivePropertyTransfomers(activeSignal),
+  // })
+  const mergedProperties = mergeProps<CustomContainerProperties<EM>>(properties, defaultProperties, [
+    [0, darkStuff],
+    [10, createResponsivePropertyStuff(parentCtx.root.size)],
+    [20, createHoveredStuff(hoveredSignal)],
+    [30, createActiveStuff(activeSignal)],
+  ])
 
   const transformMatrix = computedTransformMatrix(mergedProperties, flexState, parentCtx.root.pixelSize)
   const globalMatrix = computedGlobalMatrix(parentCtx.childrenMatrix, transformMatrix)
@@ -106,7 +114,7 @@ export function setupCustomContainer<EM extends ThreeEventMap = ThreeEventMap>(
   state: ReturnType<typeof createCustomContainerState>,
   parentCtx: ParentContext,
   style: Signal<CustomContainerProperties<EM> | undefined>,
-  properties: Signal<CustomContainerProperties<EM> | undefined>,
+  properties: DeepSignal<CustomContainerProperties<EM>>,
   object: Object3D,
   mesh: Mesh,
   abortSignal: AbortSignal,
@@ -129,11 +137,11 @@ export function setupCustomContainer<EM extends ThreeEventMap = ThreeEventMap>(
     material.needsUpdate = true
     material.shadowSide = FrontSide
     abortableEffect(() => {
-      material.depthTest = state.mergedProperties.value.read('depthTest', true)
+      material.depthTest = state.mergedProperties.depthTest ?? true
       parentCtx.root.requestRender()
     }, abortSignal)
     abortableEffect(() => {
-      material.depthWrite = state.mergedProperties.value.read('depthWrite', false)
+      material.depthWrite = state.mergedProperties.depthWrite ?? false
       parentCtx.root.requestRender()
     }, abortSignal)
   }
@@ -149,15 +157,15 @@ export function setupCustomContainer<EM extends ThreeEventMap = ThreeEventMap>(
   setupRenderOrder(mesh, parentCtx.root, state.orderInfo)
 
   abortableEffect(() => {
-    mesh.renderOrder = state.mergedProperties.value.read('renderOrder', 0)
+    mesh.renderOrder = state.mergedProperties.renderOrder ?? 0
     parentCtx.root.requestRender()
   }, abortSignal)
   abortableEffect(() => {
-    mesh.receiveShadow = state.mergedProperties.value.read('receiveShadow', false)
+    mesh.receiveShadow = state.mergedProperties.receiveShadow ?? false
     parentCtx.root.requestRender()
   }, abortSignal)
   abortableEffect(() => {
-    mesh.castShadow = state.mergedProperties.value.read('castShadow', false)
+    mesh.castShadow = state.mergedProperties.castShadow ?? false
     parentCtx.root.requestRender()
   }, abortSignal)
   abortableEffect(() => {

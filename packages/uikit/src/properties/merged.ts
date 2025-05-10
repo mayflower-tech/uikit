@@ -1,6 +1,7 @@
 import { Signal } from '@preact/signals-core'
 import { AllOptionalProperties, Properties, WithClasses, traverseProperties } from './default.js'
 import { AllAliases, allAliases } from './alias.js'
+import { DeepSignal } from 'deepsignal/core'
 
 export type PropertyTransformers = Record<string, (value: unknown, target: MergedProperties) => void>
 
@@ -118,15 +119,18 @@ export class MergedProperties {
 
   addAll(
     style: WithClasses<Properties> | undefined,
-    properties: WithClasses<Properties> | undefined,
+    properties: DeepSignal<WithClasses<Properties>>,
     defaultProperties: AllOptionalProperties | undefined,
     postTransformers: PropertyTransformers,
   ): void {
+    // @ts-expect-error
     traverseProperties(style, properties, defaultProperties, (p) => {
       for (const key in p) {
+        // @ts-expect-error
         this.add(key, p[key])
       }
       for (const key in postTransformers) {
+        // @ts-expect-error
         const property = p[key]
         if (property == null) {
           continue

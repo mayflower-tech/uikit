@@ -27,6 +27,7 @@ import {
   PanelProperties,
   PanelMaterialConfig,
   computedPanelGroupDependencies,
+  MaterialClass,
 } from '../panel/index.js'
 import { WithAllAliases } from '../properties/alias.js'
 import { AllOptionalProperties, WithClasses, WithReactive } from '../properties/default.js'
@@ -56,6 +57,8 @@ import {
   setupMatrixWorldUpdate,
   setupPointerEvents,
   computedAncestorsHaveListeners,
+  mergeProps,
+  ReadonlyDeepSignalObject,
 } from './utils.js'
 import { MergedProperties } from '../properties/merged.js'
 import { abortableEffect, readReactive } from '../utils.js'
@@ -70,12 +73,13 @@ import {
 import { computedClippingRect, computedIsClipped, createGlobalClippingPlanes } from '../clipping.js'
 import { setupLayoutListeners, setupClippedListeners } from '../listeners.js'
 import { computedInheritableProperty } from '../properties/utils.js'
-import { createActivePropertyTransfomers } from '../active.js'
-import { createHoverPropertyTransformers, setupCursorCleanup } from '../hover.js'
-import { createResponsivePropertyTransformers } from '../responsive.js'
+import { createActivePropertyTransfomers, createActiveStuff } from '../active.js'
+import { createHoveredStuff, createHoverPropertyTransformers, setupCursorCleanup } from '../hover.js'
+import { createResponsivePropertyStuff, createResponsivePropertyTransformers } from '../responsive.js'
 import { AppearanceProperties } from './svg.js'
-import { darkPropertyTransformers } from '../dark.js'
+import { darkPropertyTransformers, darkStuff } from '../dark.js'
 import { ThreeEventMap } from '../events.js'
+import { DeepSignal } from 'deepsignal/core'
 
 export type ImageFit = 'cover' | 'fill'
 const defaultImageFit: ImageFit = 'fill'
@@ -118,15 +122,15 @@ export function createImageState<EM extends ThreeEventMap = ThreeEventMap>(
   parentCtx: ParentContext,
   objectRef: { current?: Object3D | null },
   style: Signal<ImageProperties<EM> | undefined>,
-  properties: Signal<ImageProperties<EM> | undefined>,
-  defaultProperties: Signal<AllOptionalProperties | undefined>,
+  properties: DeepSignal<ImageProperties<EM>>,
+  defaultProperties: DeepSignal<AllOptionalProperties>,
 ) {
   const flexState = createFlexNodeState()
   const texture = signal<Texture | undefined>(undefined)
   const hoveredSignal = signal<Array<number>>([])
   const activeSignal = signal<Array<number>>([])
 
-  const src = computed(() => readReactive(style.value?.src) ?? readReactive(properties.value?.src))
+  const src = computed(() => readReactive(style.value?.src) ?? readReactive(properties.src))
 
   const textureAspectRatio = computed(() => {
     const tex = texture.value
@@ -137,19 +141,25 @@ export function createImageState<EM extends ThreeEventMap = ThreeEventMap>(
     return image.width / image.height
   })
 
-  const mergedProperties = computedMergedProperties(
-    style,
-    properties,
-    defaultProperties,
-    {
-      ...darkPropertyTransformers,
-      ...createResponsivePropertyTransformers(parentCtx.root.size),
-      ...createHoverPropertyTransformers(hoveredSignal),
-      ...createActivePropertyTransfomers(activeSignal),
-    },
-    keepAspectRatioPropertyTransformer,
-    (m) => m.add('aspectRatio', textureAspectRatio),
-  )
+  // const mergedProperties = computedMergedProperties(
+  //   style,
+  //   properties,
+  //   defaultProperties,
+  //   {
+  //     ...darkPropertyTransformers,
+  //     ...createResponsivePropertyTransformers(parentCtx.root.size),
+  //     ...createHoverPropertyTransformers(hoveredSignal),
+  //     ...createActivePropertyTransfomers(activeSignal),
+  //   },
+  //   keepAspectRatioPropertyTransformer,
+  //   (m) => m.add('aspectRatio', textureAspectRatio),
+  // )
+  const mergedProperties = mergeProps<ImageProperties<EM>>(properties, defaultProperties, [
+    [0, darkStuff],
+    [10, createResponsivePropertyStuff(parentCtx.root.size)],
+    [20, createHoveredStuff(hoveredSignal)],
+    [30, createActiveStuff(activeSignal)],
+  ])
 
   const transformMatrix = computedTransformMatrix(mergedProperties, flexState, parentCtx.root.pixelSize)
   const globalMatrix = computedGlobalMatrix(parentCtx.childrenMatrix, transformMatrix)
@@ -209,7 +219,7 @@ export function setupImage<EM extends ThreeEventMap = ThreeEventMap>(
   state: ReturnType<typeof createImageState>,
   parentCtx: ParentContext,
   style: Signal<ImageProperties<EM> | undefined>,
-  properties: Signal<ImageProperties<EM> | undefined>,
+  properties: DeepSignal<ImageProperties<EM>>,
   object: Object3D,
   childrenContainer: Object3D,
   abortSignal: AbortSignal,
@@ -266,7 +276,17 @@ export function setupImage<EM extends ThreeEventMap = ThreeEventMap>(
   )
 }
 
-let imageMaterialConfig: PanelMaterialConfig | undefined
+type ImagePanelMaterialConfigPropKeys =
+  | 'borderBend'
+  | 'borderBottomLeftRadius'
+  | 'borderBottomRightRadius'
+  | 'borderColor'
+  | 'borderOpacity'
+  | 'borderTopLeftRadius'
+  | 'borderTopRightRadius'
+  | 'opacity'
+
+let imageMaterialConfig: PanelMaterialConfig<ImagePanelMaterialConfigPropKeys> | undefined
 function getImageMaterialConfig() {
   imageMaterialConfig ??= createPanelMaterialConfig(
     {
@@ -321,7 +341,7 @@ function createImageMesh(
 
 function setupImageMesh(
   mesh: Mesh & { boundingSphere: Sphere },
-  propertiesSignal: Signal<MergedProperties>,
+  propertiesSignal: ReadonlyDeepSignalObject<{}>,
   textureSignal: Signal<Texture | undefined>,
   globalMatrix: Signal<Matrix4 | undefined>,
   parentContext: ParentContext,
@@ -446,7 +466,14 @@ async function loadTextureImpl(src?: string | Texture): Promise<(Texture & { dis
 }
 
 function setupImageMaterials(
-  propertiesSignal: Signal<MergedProperties>,
+  propertiesSignal: ReadonlyDeepSignalObject<{
+    panelMaterialClass?: MaterialClass
+    depthTest?: boolean
+    depthWrite?: boolean
+    renderOrder?: number
+    castShadow?: boolean
+    receiveShadow?: boolean
+  }>,
   textureSignal: Signal<Texture | undefined>,
   target: Mesh,
   size: Signal<Vector2Tuple | undefined>,
@@ -464,15 +491,15 @@ function setupImageMaterials(
   target.customDistanceMaterial.clippingPlanes = clippingPlanes
 
   abortableEffect(() => {
-    const material = createPanelMaterial(propertiesSignal.value.read('panelMaterialClass', MeshBasicMaterial), info)
+    const material = createPanelMaterial(propertiesSignal.panelMaterialClass ?? MeshBasicMaterial, info)
     material.clippingPlanes = clippingPlanes
     target.material = material
     const cleanupDepthTestEffect = effect(() => {
-      material.depthTest = propertiesSignal.value.read('depthTest', true)
+      material.depthTest = propertiesSignal.depthTest ?? true
       root.requestRender()
     })
     const cleanupDepthWriteEffect = effect(() => {
-      material.depthWrite = propertiesSignal.value.read('depthWrite', false)
+      material.depthWrite = propertiesSignal.depthWrite ?? false
       root.requestRender()
     })
     const cleanupTextureEffect = effect(() => {
@@ -488,15 +515,15 @@ function setupImageMaterials(
     }
   }, abortSignal)
   abortableEffect(() => {
-    target.renderOrder = propertiesSignal.value.read('renderOrder', 0)
+    target.renderOrder = propertiesSignal.renderOrder ?? 0
     root.requestRender()
   }, abortSignal)
   abortableEffect(() => {
-    target.castShadow = propertiesSignal.value.read('castShadow', false)
+    target.castShadow = propertiesSignal.castShadow ?? false
     root.requestRender()
   }, abortSignal)
   abortableEffect(() => {
-    target.receiveShadow = propertiesSignal.value.read('receiveShadow', false)
+    target.receiveShadow = propertiesSignal.receiveShadow ?? false
     root.requestRender()
   }, abortSignal)
 
@@ -519,13 +546,16 @@ function setupImageMaterials(
   }, abortSignal)
   const setters = imageMaterialConfig.setters
   setupImmediateProperties(
+    // @ts-expect-error
     propertiesSignal,
     isVisible,
     imageMaterialConfig.hasProperty,
     (key, value) => {
+      // @ts-expect-error
       setters[key](data, 0, value as any, size, undefined)
       root.requestRender()
     },
     abortSignal,
+    Object.keys(setters) as unknown as keyof typeof setters,
   )
 }

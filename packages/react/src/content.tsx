@@ -38,6 +38,7 @@ export const Content: (props: ContentProperties & RefAttributes<ContentRef>) => 
       }
       const abortController = new AbortController()
       setupContent<R3FEventMap>(
+        // @ts-expect-error
         internals,
         parent,
         propertySignals.style,
@@ -49,6 +50,7 @@ export const Content: (props: ContentProperties & RefAttributes<ContentRef>) => 
       return () => abortController.abort()
     }, [internals, parent, propertySignals])
 
+    // @ts-expect-error
     useComponentInternals(ref, parent.root, propertySignals.style, internals, internals.interactionPanel)
 
     return (

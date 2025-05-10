@@ -1,15 +1,17 @@
 import { AllOptionalProperties } from '../properties/default.js'
 import { createParentContextSignal, setupParentContextSignal, bindHandlers, Component } from './utils.js'
 import { ReadonlySignal, Signal, effect, signal, untracked } from '@preact/signals-core'
+import { DeepSignal, deepSignal } from 'deepsignal/core'
 import { TextProperties, createTextState, setupText } from '../components/text.js'
 import { MergedProperties } from '../properties/index.js'
 import { ThreeEventMap } from '../events.js'
+import { ReadonlyDeepSignalObject } from '../internals.js'
 
 export class Text<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Component<T> {
-  private mergedProperties?: ReadonlySignal<MergedProperties>
+  private mergedProperties?: ReadonlyDeepSignalObject<TextProperties<EM>>
   private readonly styleSignal: Signal<TextProperties<EM> | undefined> = signal(undefined)
-  private readonly propertiesSignal: Signal<TextProperties<EM> | undefined>
-  private readonly defaultPropertiesSignal: Signal<AllOptionalProperties | undefined>
+  private readonly propertiesSignal: DeepSignal<TextProperties<EM>>
+  private readonly defaultPropertiesSignal: DeepSignal<AllOptionalProperties>
   private readonly textSignal: Signal<unknown | Signal<unknown> | Array<unknown | Signal<unknown>>>
   private readonly parentContextSignal = createParentContextSignal()
   private readonly unsubscribe: () => void
@@ -24,8 +26,8 @@ export class Text<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Comp
     super()
     this.matrixAutoUpdate = false
     setupParentContextSignal(this.parentContextSignal, this)
-    this.propertiesSignal = signal(properties)
-    this.defaultPropertiesSignal = signal(defaultProperties)
+    this.propertiesSignal = deepSignal(properties ?? {})
+    this.defaultPropertiesSignal = deepSignal(defaultProperties ?? {})
     this.textSignal = signal(text)
 
     this.unsubscribe = effect(() => {
@@ -61,7 +63,8 @@ export class Text<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Comp
   }
 
   getComputedProperty<K extends keyof TextProperties<EM>>(key: K): TextProperties<EM>[K] | undefined {
-    return untracked(() => this.mergedProperties?.value.read(key as string, undefined))
+    // @ts-expect-error
+    return untracked(() => this.mergedProperties?.[key])
   }
 
   getStyle(): undefined | Readonly<TextProperties<EM>> {
@@ -73,11 +76,11 @@ export class Text<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Comp
   }
 
   setProperties(properties: TextProperties<EM> | undefined) {
-    this.propertiesSignal.value = properties
+    Object.assign(this.propertiesSignal, properties)
   }
 
   setDefaultProperties(properties: AllOptionalProperties) {
-    this.defaultPropertiesSignal.value = properties
+    Object.assign(this.defaultPropertiesSignal, properties)
   }
 
   destroy() {

@@ -38,6 +38,7 @@ export const Svg: (props: SvgProperties & RefAttributes<SvgRef>) => ReactNode = 
     }
     const abortController = new AbortController()
     setupSvg<R3FEventMap>(
+      // @ts-expect-error
       internals,
       parent,
       propertySignals.style,
@@ -49,6 +50,7 @@ export const Svg: (props: SvgProperties & RefAttributes<SvgRef>) => ReactNode = 
     return () => abortController.abort()
   }, [parent, propertySignals, internals])
 
+  // @ts-expect-error
   useComponentInternals(ref, parent.root, propertySignals.style, internals, internals.interactionPanel)
 
   return (
@@ -56,6 +58,7 @@ export const Svg: (props: SvgProperties & RefAttributes<SvgRef>) => ReactNode = 
       <primitive object={internals.interactionPanel} />
       <primitive object={internals.centerGroup} />
       <object3D matrixAutoUpdate={false} ref={innerRef}>
+        {/* @ts-expect-error */}
         <DefaultProperties {...internals.defaultProperties}>
           <ParentProvider value={internals}>{properties.children}</ParentProvider>
         </DefaultProperties>

@@ -4,6 +4,7 @@ import { ReactNode, forwardRef, useEffect, useMemo, useState } from 'react'
 import { Object3D } from 'three'
 import { useDefaultProperties } from './default.js'
 import { AllOptionalProperties } from '@pmndrs/uikit/internals'
+import { DeepSignal, deepSignal } from 'deepsignal/core'
 
 export type R3FEventMap = {
   mouse: ThreeEvent<MouseEvent>
@@ -35,16 +36,22 @@ export const AddHandlers = forwardRef<
   )
 })
 
-export function usePropertySignals<T>(properties: T) {
+export function usePropertySignals<T extends object>(
+  properties: T,
+): {
+  style: Signal<T | undefined>
+  properties: DeepSignal<T>
+  default: DeepSignal<AllOptionalProperties>
+} {
   const propertySignals = useMemo(
     () => ({
       style: signal<T | undefined>(undefined),
-      properties: signal<T | undefined>(undefined as any),
-      default: signal<AllOptionalProperties | undefined>(undefined),
+      properties: deepSignal<T>({} as T),
+      default: deepSignal<AllOptionalProperties>({}),
     }),
     [],
   )
-  propertySignals.properties.value = properties
-  propertySignals.default.value = useDefaultProperties()
+  Object.assign(propertySignals.properties, properties)
+  Object.assign(propertySignals.default, useDefaultProperties())
   return propertySignals
 }

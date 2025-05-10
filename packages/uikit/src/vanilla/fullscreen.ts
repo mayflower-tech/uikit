@@ -31,6 +31,7 @@ export class Fullscreen<T = {}, EM extends ThreeEventMap = ThreeEventMap> extend
     super(
       parentCameraSignal,
       renderer,
+      // @ts-expect-error
       { ...properties, sizeX, sizeY, pixelSize, transformTranslateZ },
       defaultProperties,
       fontFamilies,
@@ -85,9 +86,13 @@ export class Fullscreen<T = {}, EM extends ThreeEventMap = ThreeEventMap> extend
   setProperties(properties: FullscreenProperties<EM> | undefined): void {
     super.setProperties({
       ...properties,
+      // @ts-expect-error
       sizeX: this.sizeX,
+      // @ts-expect-error
       sizeY: this.sizeY,
+      // @ts-expect-error
       pixelSize: this.pixelSize,
+      // @ts-expect-error
       transformTranslateZ: this.transformTranslateZ,
     })
   }

@@ -13,6 +13,7 @@ import { ElementType, OrderInfo, WithReversePainterSortStableCache, setupRenderO
 import { Signal, computed } from '@preact/signals-core'
 import { MergedProperties } from '../properties/merged.js'
 import { RootContext } from '../context.js'
+import { DeepSignal } from 'deepsignal/core'
 
 export type ShadowProperties = {
   receiveShadow?: boolean
@@ -30,16 +31,15 @@ export type PanelGroupProperties = {
 } & ShadowProperties &
   RenderProperties
 
-export function computedPanelGroupDependencies(propertiesSignal: Signal<MergedProperties>) {
+export function computedPanelGroupDependencies(propertiesSignal: DeepSignal<PanelGroupProperties>) {
   return computed<Required<PanelGroupProperties>>(() => {
-    const properties = propertiesSignal.value
     return {
-      panelMaterialClass: properties.read('panelMaterialClass', MeshBasicMaterial),
-      castShadow: properties.read('castShadow', false),
-      receiveShadow: properties.read('receiveShadow', false),
-      depthWrite: properties.read('depthWrite', false),
-      depthTest: properties.read('depthTest', true),
-      renderOrder: properties.read('renderOrder', 0),
+      panelMaterialClass: propertiesSignal.panelMaterialClass ?? MeshBasicMaterial,
+      castShadow: propertiesSignal.castShadow ?? false,
+      receiveShadow: propertiesSignal.receiveShadow ?? false,
+      depthWrite: propertiesSignal.depthWrite ?? false,
+      depthTest: propertiesSignal.depthTest ?? true,
+      renderOrder: propertiesSignal.renderOrder ?? 0,
     }
   })
 }

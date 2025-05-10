@@ -5,6 +5,8 @@ import { abortableEffect, alignmentXMap, alignmentYMap, percentageRegex } from '
 import { MergedProperties } from './properties/merged.js'
 import { RootContext } from './context.js'
 import { computedInheritableProperty } from './properties/index.js'
+import { DeepSignal } from 'deepsignal/core'
+import { ReadonlyDeepSignalObject } from './components/utils.js'
 
 export type Percentage = `${number}%`
 
@@ -41,7 +43,7 @@ const defaultTransformOriginX: keyof typeof alignmentXMap = 'center'
 const defaultTransformOriginY: keyof typeof alignmentYMap = 'center'
 
 export function computedTransformMatrix(
-  propertiesSignal: Signal<MergedProperties>,
+  propertiesSignal: ReadonlyDeepSignalObject<TransformProperties>,
   { relativeCenter, size }: FlexNodeState,
   pixelSizeSignal: Signal<number>,
 ): Signal<Matrix4 | undefined> {
@@ -50,22 +52,35 @@ export function computedTransformMatrix(
   //O = matrix to transform the origin for matrix T
   //T = transform matrix (translate, rotate, scale)
 
-  const tTX = computedInheritableProperty<Percentage | number>(propertiesSignal, 'transformTranslateX', 0)
-  const tTY = computedInheritableProperty<Percentage | number>(propertiesSignal, 'transformTranslateY', 0)
-  const tTZ = computedInheritableProperty(propertiesSignal, 'transformTranslateZ', 0)
-  const tRX = computedInheritableProperty(propertiesSignal, 'transformRotateX', 0)
-  const tRY = computedInheritableProperty(propertiesSignal, 'transformRotateY', 0)
-  const tRZ = computedInheritableProperty(propertiesSignal, 'transformRotateZ', 0)
-  const tSX = computedInheritableProperty<Percentage | number>(propertiesSignal, 'transformScaleX', 1)
-  const tSY = computedInheritableProperty<Percentage | number>(propertiesSignal, 'transformScaleY', 1)
-  const tSZ = computedInheritableProperty<Percentage | number>(propertiesSignal, 'transformScaleZ', 1)
-  const tOX = computedInheritableProperty(propertiesSignal, 'transformOriginX', defaultTransformOriginX)
-  const tOY = computedInheritableProperty(propertiesSignal, 'transformOriginY', defaultTransformOriginY)
+  // const tTX = computedInheritableProperty<Percentage | number>(propertiesSignal, 'transformTranslateX', 0)
+  // const tTY = computedInheritableProperty<Percentage | number>(propertiesSignal, 'transformTranslateY', 0)
+  // const tTZ = computedInheritableProperty(propertiesSignal, 'transformTranslateZ', 0)
+  // const tRX = computedInheritableProperty(propertiesSignal, 'transformRotateX', 0)
+  // const tRY = computedInheritableProperty(propertiesSignal, 'transformRotateY', 0)
+  // const tRZ = computedInheritableProperty(propertiesSignal, 'transformRotateZ', 0)
+  // const tSX = computedInheritableProperty<Percentage | number>(propertiesSignal, 'transformScaleX', 1)
+  // const tSY = computedInheritableProperty<Percentage | number>(propertiesSignal, 'transformScaleY', 1)
+  // const tSZ = computedInheritableProperty<Percentage | number>(propertiesSignal, 'transformScaleZ', 1)
+  // const tOX = computedInheritableProperty(propertiesSignal, 'transformOriginX', defaultTransformOriginX)
+  // const tOY = computedInheritableProperty(propertiesSignal, 'transformOriginY', defaultTransformOriginY)
+
+  const tTX = computed(() => propertiesSignal.transformTranslateX ?? 0)
+  const tTY = computed(() => propertiesSignal.transformTranslateY ?? 0)
+  const tTZ = computed(() => propertiesSignal.transformTranslateZ ?? 0)
+  const tRX = computed(() => propertiesSignal.transformRotateX ?? 0)
+  const tRY = computed(() => propertiesSignal.transformRotateY ?? 0)
+  const tRZ = computed(() => propertiesSignal.transformRotateZ ?? 0)
+  const tSX = computed(() => propertiesSignal.transformScaleX ?? 1)
+  const tSY = computed(() => propertiesSignal.transformScaleY ?? 1)
+  const tSZ = computed(() => propertiesSignal.transformScaleZ ?? 1)
+  const tOX = computed(() => propertiesSignal.transformOriginX ?? defaultTransformOriginX)
+  const tOY = computed(() => propertiesSignal.transformOriginY ?? defaultTransformOriginY)
 
   return computed(() => {
     if (relativeCenter.value == null) {
       return undefined
     }
+
     const [x, y] = relativeCenter.value
     const pixelSize = pixelSizeSignal.value
     const result = new Matrix4().makeTranslation(x * pixelSize, y * pixelSize, 0)

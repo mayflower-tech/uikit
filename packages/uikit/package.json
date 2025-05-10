@@ -39,11 +39,12 @@
     "three": ">=0.160"
   },
   "dependencies": {
+    "@pmndrs/msdfonts": "workspace:^",
     "@preact/signals-core": "^1.5.1",
+    "deepsignal": "^1.6.0",
     "inline-style-parser": "^0.2.3",
     "node-html-parser": "^6.1.13",
     "tw-to-css": "^0.0.12",
-    "yoga-layout": "^3.2.1",
-    "@pmndrs/msdfonts": "workspace:^"
+    "yoga-layout": "^3.2.1"
   }
 }

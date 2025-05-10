@@ -4,13 +4,13 @@ import { createParentContextSignal, setupParentContextSignal, bindHandlers, Comp
 import { ReadonlySignal, Signal, effect, signal, untracked } from '@preact/signals-core'
 import { CustomContainerProperties, createCustomContainerState, setupCustomContainer } from '../components/index.js'
 import { panelGeometry } from '../panel/index.js'
-import { MergedProperties } from '../properties/index.js'
 import { ThreeEventMap } from '../events.js'
+import { DeepSignal, deepSignal } from 'deepsignal/core'
 
 export class CustomContainer<T = {}, EM extends ThreeEventMap = ThreeEventMap> extends Component<T> {
   private readonly styleSignal: Signal<CustomContainerProperties<EM> | undefined> = signal(undefined)
-  private readonly propertiesSignal: Signal<CustomContainerProperties<EM> | undefined>
-  private readonly defaultPropertiesSignal: Signal<AllOptionalProperties | undefined>
+  private readonly propertiesSignal: DeepSignal<CustomContainerProperties<EM>>
+  private readonly defaultPropertiesSignal: DeepSignal<AllOptionalProperties>
   private readonly parentContextSignal = createParentContextSignal()
   private readonly unsubscribe: () => void
   private readonly material = new MeshBasicMaterial()
@@ -22,8 +22,8 @@ export class CustomContainer<T = {}, EM extends ThreeEventMap = ThreeEventMap> e
     //TODO make the container the mesh
     this.matrixAutoUpdate = false
     setupParentContextSignal(this.parentContextSignal, this)
-    this.propertiesSignal = signal(properties)
-    this.defaultPropertiesSignal = signal(defaultProperties)
+    this.propertiesSignal = deepSignal(properties ?? {})
+    this.defaultPropertiesSignal = deepSignal(defaultProperties ?? {})
 
     const mesh = new Mesh(panelGeometry, this.material)
     super.add(mesh)
@@ -63,7 +63,8 @@ export class CustomContainer<T = {}, EM extends ThreeEventMap = ThreeEventMap> e
   getComputedProperty<K extends keyof CustomContainerProperties<EM>>(
     key: K,
   ): CustomContainerProperties<EM>[K] | undefined {
-    return untracked(() => this.internals.mergedProperties?.value.read(key as string, undefined))
+    // @ts-expect-error
+    return untracked(() => this.internals.mergedProperties[key])
   }
 
   getStyle(): undefined | Readonly<CustomContainerProperties<EM>> {
@@ -75,11 +76,11 @@ export class CustomContainer<T = {}, EM extends ThreeEventMap = ThreeEventMap> e
   }
 
   setProperties(properties: CustomContainerProperties<EM> | undefined) {
-    this.propertiesSignal.value = properties
+    Object.assign(this.propertiesSignal, properties)
   }
 
   setDefaultProperties(properties: AllOptionalProperties) {
-    this.defaultPropertiesSignal.value = properties
+    Object.assign(this.defaultPropertiesSignal, properties)
   }
 
   destroy() {

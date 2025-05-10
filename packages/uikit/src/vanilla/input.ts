@@ -1,15 +1,17 @@
 import { AllOptionalProperties } from '../properties/default.js'
 import { createParentContextSignal, setupParentContextSignal, bindHandlers, Component } from './utils.js'
 import { ReadonlySignal, Signal, effect, signal, untracked } from '@preact/signals-core'
+import { DeepSignal, deepSignal } from 'deepsignal/core'
 import { InputProperties, createInputState, setupInput } from '../components/input.js'
 import { MergedProperties } from '../properties/index.js'
 import { ThreeEventMap } from '../events.js'
+import { ReadonlyDeepSignalObject } from '../internals.js'
 
 export class Input<T = {}, Em extends ThreeEventMap = ThreeEventMap> extends Component<T> {
-  private mergedProperties?: ReadonlySignal<MergedProperties>
+  private mergedProperties?: ReadonlyDeepSignalObject<InputProperties<Em>>
   private readonly styleSignal: Signal<InputProperties<Em> | undefined> = signal(undefined)
-  private readonly propertiesSignal: Signal<InputProperties<Em> | undefined>
-  private readonly defaultPropertiesSignal: Signal<AllOptionalProperties | undefined>
+  private readonly propertiesSignal: DeepSignal<InputProperties<Em>>
+  private readonly defaultPropertiesSignal: DeepSignal<AllOptionalProperties>
   private readonly parentContextSignal = createParentContextSignal()
   private readonly unsubscribe: () => void
 
@@ -19,8 +21,8 @@ export class Input<T = {}, Em extends ThreeEventMap = ThreeEventMap> extends Com
     super()
     this.matrixAutoUpdate = false
     setupParentContextSignal(this.parentContextSignal, this)
-    this.propertiesSignal = signal(properties)
-    this.defaultPropertiesSignal = signal(defaultProperties)
+    this.propertiesSignal = deepSignal(properties ?? {})
+    this.defaultPropertiesSignal = deepSignal(defaultProperties ?? {})
 
     this.unsubscribe = effect(() => {
       const parentContext = this.parentContextSignal.value?.value
@@ -58,7 +60,8 @@ export class Input<T = {}, Em extends ThreeEventMap = ThreeEventMap> extends Com
   }
 
   getComputedProperty<K extends keyof InputProperties<Em>>(key: K): InputProperties<Em>[K] | undefined {
-    return untracked(() => this.mergedProperties?.value.read(key as string, undefined))
+    // @ts-expect-error
+    return untracked(() => this.internals.mergedProperties[key])
   }
 
   getStyle(): undefined | Readonly<InputProperties<Em>> {
@@ -70,11 +73,11 @@ export class Input<T = {}, Em extends ThreeEventMap = ThreeEventMap> extends Com
   }
 
   setProperties(properties: InputProperties<Em> | undefined) {
-    this.propertiesSignal.value = properties
+    Object.assign(this.propertiesSignal, properties)
   }
 
   setDefaultProperties(properties: AllOptionalProperties) {
-    this.defaultPropertiesSignal.value = properties
+    Object.assign(this.defaultPropertiesSignal, properties)
   }
 
   destroy() {
